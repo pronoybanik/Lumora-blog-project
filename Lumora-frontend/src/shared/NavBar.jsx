@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 const NavBar = () => {
   return (
     <header className="w-full border-b border-slate-100 bg-white/80 backdrop-blur sticky top-0 z-20">
@@ -50,12 +52,12 @@ const NavBar = () => {
             </svg>
           </button>
           <div className="flex items-center gap-2">
-            <button className="text-sm font-medium text-slate-600 hover:text-indigo-700 px-3 py-2 rounded-full transition-colors">
+            <Link to="/login" className="text-sm font-medium text-slate-600 hover:text-indigo-700 px-3 py-2 rounded-full transition-colors">
               Log in
-            </button>
-            <button className="bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 transition-colors text-white text-sm font-medium px-4 py-2 rounded-full shadow-sm shadow-indigo-200">
+            </Link>
+            <Link to="/register" className="bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 transition-colors text-white text-sm font-medium px-4 py-2 rounded-full shadow-sm shadow-indigo-200">
               Sign up
-            </button>
+            </Link>
           </div>
           <img
             src="https://i.pravatar.cc/40?img=68"
