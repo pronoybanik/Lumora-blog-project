@@ -4,12 +4,12 @@ const NavBar = () => {
   return (
     <header className="w-full border-b border-slate-100 bg-white/80 backdrop-blur sticky top-0 z-20">
       <div className="max-w-6xl mx-auto flex items-center justify-between px-6 py-4">
-        <div className="flex items-center gap-2">
+        <Link to="/" className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-md bg-indigo-600 flex items-center justify-center text-white text-sm font-bold">
             L
           </div>
           <span className="text-lg font-semibold text-indigo-700">Lumora</span>
-        </div>
+        </Link>
 
         <nav className="hidden md:flex items-center gap-8 text-sm text-slate-600 font-medium">
           <a href="#" className="text-slate-900">
