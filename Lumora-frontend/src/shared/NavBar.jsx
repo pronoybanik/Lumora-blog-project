@@ -18,9 +18,9 @@ const NavBar = () => {
           <a href="#" className="hover:text-slate-900">
             Categories
           </a>
-          <a href="#" className="hover:text-slate-900">
+          <Link to="/pricing" className="hover:text-slate-900">
             Pricing
-          </a>
+          </Link>
         </nav>
 
         <div className="flex items-center gap-4">
