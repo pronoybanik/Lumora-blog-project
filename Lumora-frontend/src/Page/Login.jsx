@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Mail, Lock, Eye, EyeOff, ArrowRight, User } from "lucide-react";
-const Login =()=> {
+import { Link } from "react-router-dom";
+const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(false);
   const [form, setForm] = useState({ email: "", password: "" });
@@ -152,13 +153,16 @@ const Login =()=> {
         {/* Footer */}
         <p className="text-center mt-6 text-sm text-slate-500">
           Don't have an account?{" "}
-          <a href="#" className="text-indigo-600 hover:text-indigo-700 font-medium">
+          <Link
+            to="/register"
+            className="text-indigo-600 hover:text-indigo-700 font-medium"
+          >
             Create one now
-          </a>
+          </Link>
         </p>
       </div>
     </div>
   );
-}
+};
 
 export default Login;

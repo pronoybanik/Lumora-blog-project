@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { User, Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const Register =()=> {
   const [showPassword, setShowPassword] = useState(false);
@@ -157,9 +158,9 @@ const Register =()=> {
         {/* Footer */}
         <p className="text-center mt-6 text-sm text-slate-500">
           Already have an account?{" "}
-          <a href="#" className="text-indigo-600 hover:text-indigo-700 font-medium">
+          <Link to="/login" className="text-indigo-600 hover:text-indigo-700 font-medium">
             Log in
-          </a>
+          </Link>
         </p>
       </div>
     </div>
