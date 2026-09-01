@@ -12,14 +12,29 @@ const NavBar = () => {
         </Link>
 
         <nav className="hidden md:flex items-center gap-8 text-sm text-slate-600 font-medium">
-          <a href="#" className="text-slate-900">
+          {/* <a href="#" className="text-slate-900">
             Explore
           </a>
           <a href="#" className="hover:text-slate-900">
             Categories
-          </a>
+          </a> */}
           <Link to="/pricing" className="hover:text-slate-900">
             Pricing
+          </Link>
+          <Link to="/blogList" className="hover:text-slate-900">
+            Blog List
+          </Link>
+          <Link to="/createBlogs" className="hover:text-slate-900">
+            create Blogs
+          </Link>
+          <Link to="/createBlogs" className="hover:text-slate-900">
+            create Blogs
+          </Link>
+          <Link to="/profilePage" className="hover:text-slate-900">
+            profile Page
+          </Link>
+          <Link to="/adminDashboard/dashboard" className="hover:text-slate-900">
+          admin dashboard
           </Link>
         </nav>
 
