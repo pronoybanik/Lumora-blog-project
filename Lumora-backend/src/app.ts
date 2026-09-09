@@ -3,13 +3,16 @@ import express, {
   type Request,
   type Response,
 } from "express";
+import router from "./app/router";
 
 const app = express();
 
 app.disable("x-powered-by");
 
 app.use(express.json({ limit: "1mb" }));
-app.use(express.urlencoded({ extended: true, limit: "1mb" }));
+app.use(express.urlencoded({ extended: true }));
+
+app.use("/api/v1", router);
 
 app.get("/", (_req: Request, res: Response) => {
   res.status(200).json({
@@ -34,22 +37,20 @@ app.use((_req: Request, res: Response) => {
   });
 });
 
-app.use(
-  (error: unknown, _req: Request, res: Response, _next: NextFunction) => {
-    const statusCode = getStatusCode(error);
-    const message =
-      statusCode === 500 && process.env.NODE_ENV === "production"
-        ? "Internal server error"
-        : getErrorMessage(error);
+app.use((error: unknown, _req: Request, res: Response, _next: NextFunction) => {
+  const statusCode = getStatusCode(error);
+  const message =
+    statusCode === 500 && process.env.NODE_ENV === "production"
+      ? "Internal server error"
+      : getErrorMessage(error);
 
-    console.error(error);
+  console.error(error);
 
-    res.status(statusCode).json({
-      success: false,
-      message,
-    });
-  },
-);
+  res.status(statusCode).json({
+    success: false,
+    message,
+  });
+});
 
 function getStatusCode(error: unknown): number {
   if (
