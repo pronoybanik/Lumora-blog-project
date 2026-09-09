@@ -1,6 +1,25 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { LogOut } from "lucide-react";
+import { useAuth } from "../context/useAuth";
 
 const NavBar = () => {
+  const navigate = useNavigate();
+  const { user, loading, logout } = useAuth();
+
+  console.log(user)
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
+
+  const initials = user?.name
+    ?.split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
   return (
     <header className="w-full border-b border-slate-100 bg-white/80 backdrop-blur sticky top-0 z-20">
       <div className="max-w-6xl mx-auto flex items-center justify-between px-6 py-4">
@@ -27,15 +46,16 @@ const NavBar = () => {
           <Link to="/createBlogs" className="hover:text-slate-900">
             create Blogs
           </Link>
-          <Link to="/createBlogs" className="hover:text-slate-900">
-            create Blogs
-          </Link>
-          <Link to="/profilePage" className="hover:text-slate-900">
-            profile Page
-          </Link>
-          <Link to="/adminDashboard/dashboard" className="hover:text-slate-900">
-          admin dashboard
-          </Link>
+          {user && (
+            <Link to="/profilePage" className="hover:text-slate-900">
+              profile Page
+            </Link>
+          )}
+          {user?.role === "ADMIN" && (
+            <Link to="/adminDashboard/dashboard" className="hover:text-slate-900">
+              admin dashboard
+            </Link>
+          )}
         </nav>
 
         <div className="flex items-center gap-4">
@@ -52,9 +72,11 @@ const NavBar = () => {
             </svg>
             <span>Search articles...</span>
           </div>
-          <button className="bg-indigo-600 hover:bg-indigo-700 transition-colors text-white text-sm font-medium px-4 py-2 rounded-full">
-            Write
-          </button>
+          {user && (
+            <Link to="/createBlogs" className="bg-indigo-600 hover:bg-indigo-700 transition-colors text-white text-sm font-medium px-4 py-2 rounded-full">
+              Write
+            </Link>
+          )}
           <button className="text-slate-500 hover:text-slate-700">
             <svg
               className="w-5 h-5"
@@ -66,19 +88,34 @@ const NavBar = () => {
               <path d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 0 0-4-5.65V5a2 2 0 1 0-4 0v.35A6 6 0 0 0 6 11v3.2a2 2 0 0 1-.6 1.4L4 17h5m6 0v1a3 3 0 1 1-6 0v-1m6 0H9" />
             </svg>
           </button>
-          <div className="flex items-center gap-2">
-            <Link to="/login" className="text-sm font-medium text-slate-600 hover:text-indigo-700 px-3 py-2 rounded-full transition-colors">
-              Log in
-            </Link>
-            <Link to="/register" className="bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 transition-colors text-white text-sm font-medium px-4 py-2 rounded-full shadow-sm shadow-indigo-200">
-              Sign up
-            </Link>
-          </div>
-          <img
-            src="https://i.pravatar.cc/40?img=68"
-            alt="profile"
-            className="w-8 h-8 rounded-full object-cover"
-          />
+          {!loading && (user ? (
+            <div className="flex items-center gap-2">
+              <Link to="/profilePage" className="flex items-center gap-2 text-sm font-medium text-slate-700 hover:text-indigo-700">
+                <span className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-xs font-bold">
+                  {initials || "U"}
+                </span>
+                <span className="hidden lg:inline max-w-24 truncate">{user.name}</span>
+              </Link>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="text-slate-500 hover:text-red-600 transition-colors"
+                aria-label="Log out"
+                title="Log out"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Link to="/login" className="text-sm font-medium text-slate-600 hover:text-indigo-700 px-3 py-2 rounded-full transition-colors">
+                Log in
+              </Link>
+              <Link to="/register" className="bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 transition-colors text-white text-sm font-medium px-4 py-2 rounded-full shadow-sm shadow-indigo-200">
+                Sign up
+              </Link>
+            </div>
+          ))}
         </div>
       </div>
     </header>
