@@ -1,8 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
@@ -12,8 +7,224 @@ datasource db {
   provider = "postgresql"
 }
 
-model User { 
-  id    Int     @id @default(autoincrement()) 
-  email String  @unique
-  name  String?
+// ==========================
+// ENUMS
+// ==========================
+
+enum Role {
+  USER
+  AUTHOR
+  ADMIN
+}
+
+enum BlogStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+// ==========================
+// USER
+// ==========================
+
+model User {
+  id String @id @default(uuid())
+
+  email    String @unique
+  name     String
+  password String
+  role     Role   @default(USER)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  profile   Profile?
+  blogs     Blog[]
+  comments  Comment[]
+  likes     Like[]
+  following Follow[]  @relation("Following")
+  followers Follow[]  @relation("Followers")
+
+  @@index([email])
+  @@index([role])
+}
+
+// ==========================
+// PROFILE
+// ==========================
+
+model Profile {
+  id String @id @default(uuid())
+
+  userId String @unique
+
+  bio        String? @db.Text
+  avatar     String?
+  coverImage String?
+
+  username String? @unique
+  location String?
+  website  String?
+
+  // Social media
+  facebook  String?
+  instagram String?
+  twitter   String?
+  linkedin  String?
+  github    String?
+
+  // Author information
+  profession String?
+  expertise  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // bookmarks Bookmark[]
+
+  // Relation
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([username])
+}
+
+// ==========================
+// FOLLOW SYSTEM
+// ==========================
+
+model Follow {
+  id String @id @default(uuid())
+
+  followerId  String
+  followingId String
+
+  createdAt DateTime @default(now())
+
+  // User who follows
+  follower User @relation("Following", fields: [followerId], references: [id], onDelete: Cascade)
+
+  // User being followed
+  following User @relation("Followers", fields: [followingId], references: [id], onDelete: Cascade)
+
+  // Prevent duplicate follows
+  @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+}
+
+// ==========================
+// BLOG
+// ==========================
+
+model Blog {
+  id String @id @default(uuid())
+
+  title String
+  slug  String @unique
+
+  excerpt String? @db.Text
+  content String  @db.Text
+
+  coverImage String?
+
+  status BlogStatus @default(DRAFT)
+
+  publishedAt DateTime?
+
+  // Author
+  authorId String
+
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  // Blog metadata
+  categoryId String?
+
+  category Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  // Engagement
+  comments Comment[]
+  likes    Like[]
+  // bookmarks Bookmark[]
+
+  viewCount Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([authorId])
+  @@index([categoryId])
+  @@index([status])
+  @@index([publishedAt])
+  @@index([createdAt])
+}
+
+// ==========================
+// CATEGORY
+// ==========================
+
+model Category {
+  id String @id @default(uuid())
+
+  name String
+  slug String @unique
+
+  description String? @db.Text
+
+  blogs Blog[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ==========================
+// COMMENT
+// ==========================
+
+model Comment {
+  id String @id @default(uuid())
+
+  content String @db.Text
+
+  userId String
+  blogId String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  blog Blog @relation(fields: [blogId], references: [id], onDelete: Cascade)
+
+  // For reply comments
+  parentId String?
+
+  parent Comment? @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+
+  replies Comment[] @relation("CommentReplies")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([blogId])
+  @@index([userId])
+  @@index([parentId])
+}
+
+// ==========================
+// LIKE
+// ==========================
+
+model Like {
+  id String @id @default(uuid())
+
+  userId String
+  blogId String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  blog Blog @relation(fields: [blogId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  // One user can like a blog only once
+  @@unique([userId, blogId])
+  @@index([blogId])
+  @@index([userId])
 }
