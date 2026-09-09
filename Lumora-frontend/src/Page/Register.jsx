@@ -2,6 +2,8 @@ import { useState } from "react";
 import { User, Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 const Register = () => {
   const navigate = useNavigate();
 
@@ -63,22 +65,19 @@ const Register = () => {
     try {
       setLoading(true);
 
-      const response = await fetch(
-        "http://localhost:5000/api/v1/auth/register",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            name: form.name,
-            email: form.email,
-            password: form.password,
-          }),
+      const response = await fetch(`${API_BASE_URL}/auth/register`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-      );
+        body: JSON.stringify({
+          name: form.name,
+          email: form.email,
+          password: form.password,
+        }),
+      });
 
-      console.log("register log", response)
+      console.log("register log", response);
 
       const result = await response.json();
 
@@ -87,7 +86,7 @@ const Register = () => {
       }
       if (result?.success) {
         setSuccess(result.message);
-        alert(result.message)
+        alert(result.message);
       }
 
       console.log("Registered user:", result.data);

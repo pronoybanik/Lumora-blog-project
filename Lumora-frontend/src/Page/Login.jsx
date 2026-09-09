@@ -1,9 +1,13 @@
 import { useState } from "react";
 import { Mail, Lock, Eye, EyeOff, ArrowRight, User } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/useAuth";
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const Login = () => {
   const navigate = useNavigate();
+  const { refreshUser } = useAuth();
 
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(false);
@@ -46,7 +50,7 @@ const Login = () => {
     try {
       setLoading(true);
 
-      const response = await fetch("http://localhost:5000/api/v1/auth/login", {
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: "POST",
         credentials: "include",
         headers: {
@@ -64,16 +68,13 @@ const Login = () => {
         throw new Error(result.message || "Login failed.");
       }
 
-      // const { accessToken, refreshToken } = result.data;
+      const accessToken = result.data.accessToken;
 
-      if (result.success) {
-        setSuccess("Logged in successfully!");
-        alert(result.message);
-      }
+      localStorage.setItem("accessToken", accessToken);
 
-      setTimeout(() => {
-        navigate("/");
-      }, 800);
+      await refreshUser();
+      setSuccess("Logged in successfully!");
+      navigate("/");
     } catch (error) {
       if (error instanceof Error) {
         setError(error.message);
@@ -190,22 +191,6 @@ const Login = () => {
                   )}
                 </button>
               </div>
-            </div>
-
-            {/* Remember me */}
-            <div className="flex items-center gap-2.5">
-              <input
-                id="remember"
-                type="checkbox"
-                checked={remember}
-                onChange={(e) => setRemember(e.target.checked)}
-                disabled={loading}
-                className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-400 cursor-pointer"
-              />
-
-              <label htmlFor="remember" className="text-sm text-slate-500">
-                Remember me for 30 days
-              </label>
             </div>
 
             {/* Submit */}
