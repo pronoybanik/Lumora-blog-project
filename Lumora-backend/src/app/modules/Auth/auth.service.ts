@@ -16,6 +16,9 @@ const createUser = async (payload: RegisterPayload) => {
             name: payload.name,
             email: payload.email,
             password: hashedPassword,
+            profile: {
+                create: {},
+            },
         },
         select: {
             id: true,
@@ -47,6 +50,7 @@ const loginUser = async (payload: {
     }
 
     const accessToken = jwtHelpers.generateToken({
+        id: userData.id,
         email: userData.email,
         role: userData.role,
     },

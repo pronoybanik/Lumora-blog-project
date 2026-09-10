@@ -12,5 +12,24 @@ router.get(
     userController.getMyProfile
 );
 
+router.get(
+    '/allUser',
+    auth("ADMIN"),
+    userController.getALlUser
+);
+
+router.delete(
+    '/:id',
+    auth("ADMIN"),
+    userController.deleteUser
+);
+
+router.patch(
+    '/profile',
+    auth(),
+    userController.updateMyProfile
+);
+
+
 
 export const UserRouter = router;

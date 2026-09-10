@@ -24,6 +24,16 @@ const getBlogs = catchAsync(async (_req: Request, res: Response) => {
   });
 });
 
+const getMyBlogs = catchAsync(async (req: Request, res: Response) => {
+  const result = await blogServices.getMyBlogs(req.user!);
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: "Your blogs fetched successfully!",
+    data: result,
+  });
+});
+
 const getBlogBySlug = catchAsync(async (req: Request, res: Response) => {
   const slug = req.params.slug as string;
   const result = await blogServices.getBlogBySlug(slug);
@@ -60,6 +70,7 @@ const deleteBlog = catchAsync(async (req: Request, res: Response) => {
 export const blogController = {
   createBlog,
   getBlogs,
+  getMyBlogs,
   getBlogBySlug,
   updateBlog,
   deleteBlog,
