@@ -4,6 +4,7 @@ import ApiError from "../../Errors/ApiError";
 import { StatusCodes } from "http-status-codes";
 
 type AuthenticatedUser = {
+  id: string;
   email: string;
   role: string;
 };
@@ -41,11 +42,12 @@ const getUniqueSlug = async (title: string, excludedId?: string) => {
 
 const getAuthor = async (user: AuthenticatedUser) =>
   prisma.user.findUniqueOrThrow({
-    where: { email: user.email },
+    where: { email: user?.email },
     select: { id: true },
   });
 
 const createBlog = async (payload: BlogPayload, user: AuthenticatedUser) => {
+  console.log("user", user);
   const author = await getAuthor(user);
   const slug = await getUniqueSlug(payload.title);
 
@@ -66,6 +68,13 @@ const createBlog = async (payload: BlogPayload, user: AuthenticatedUser) => {
 
 const getBlogs = async () =>
   prisma.blog.findMany({
+    orderBy: { createdAt: "desc" },
+    include: { author: { select: { id: true, name: true } } },
+  });
+
+const getMyBlogs = async (user: AuthenticatedUser) =>
+  prisma.blog.findMany({
+    where: { authorId: user.id },
     orderBy: { createdAt: "desc" },
     include: { author: { select: { id: true, name: true } } },
   });
@@ -125,6 +134,7 @@ const deleteBlog = async (slug: string, user: AuthenticatedUser) => {
 export const blogServices = {
   createBlog,
   getBlogs,
+  getMyBlogs,
   getBlogBySlug,
   updateBlog,
   deleteBlog,
