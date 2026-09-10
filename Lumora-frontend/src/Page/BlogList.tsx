@@ -1,15 +1,10 @@
 import React from "react";
 import {
-  Search,
-  Bell,
   ArrowLeft,
   ArrowRight,
   ThumbsUp,
   MessageSquare,
   Bookmark,
-  Share2,
-  Users,
-  Globe,
 } from "lucide-react";
 
 const trendingSide = [
