@@ -8,9 +8,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const Login = () => {
   const navigate = useNavigate();
   const { refreshUser } = useAuth();
-
   const [showPassword, setShowPassword] = useState(false);
-  const [remember, setRemember] = useState(false);
 
   const [form, setForm] = useState({
     email: "",

@@ -8,7 +8,7 @@ import BlogList from "../Page/BlogList";
 import CreateBlogs from "../Page/CreateBlogs";
 import ProfilePage from "../Page/Profile";
 import AdminDashBoard from "../Page/admin/AdminDashBoard";
-import Dashboard from "../Page/admin/DashBoard";
+import Dashboard from "../Page/admin/DashBoard.jsx";
 import BlogsPage from "../Page/admin/BlogsPage";
 import UserPage from "../Page/admin/UserPage";
 

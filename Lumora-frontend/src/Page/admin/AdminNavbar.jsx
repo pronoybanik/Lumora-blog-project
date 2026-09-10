@@ -1,7 +1,4 @@
-import React from "react";
 import {
-  Search,
-  Bell,
   BarChart2,
   FileText,
   Edit3,
@@ -12,9 +9,7 @@ import {
 } from "lucide-react";
 import { Link, NavLink, Outlet } from "react-router-dom";
 
-type AdminNavbarProps = {
-  children?: React.ReactNode;
-};
+
 
 const menuItems = [
   {
@@ -49,7 +44,7 @@ const menuItems = [
   },
 ];
 
-export default function AdminNavbar({ children }: AdminNavbarProps) {
+export default function AdminNavbar({ children }) {
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="flex">
