@@ -47,16 +47,6 @@ const NavBar = () => {
             Pricing
           </Link>
 
-         
-          {user && (
-            <Link to="/profilePage" className="hover:text-slate-900">
-              profile Page
-            </Link>
-             <Link to="/createBlogs" className="hover:text-slate-900">
-            create Blogs
-          </Link>
-            
-          )}
           {user?.role === "ADMIN" && (
             <Link
               to="/adminDashboard/dashboard"
