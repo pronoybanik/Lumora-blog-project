@@ -5,12 +5,13 @@ import Register from "../Page/Register";
 import Login from "../Page/Login";
 import Pricing from "../Page/Pricing";
 import BlogList from "../Page/BlogList";
+import BlogDetails from "../Page/BlogDetails";
 import CreateBlogs from "../Page/CreateBlogs";
-import ProfilePage from "../Page/Profile";
 import AdminDashBoard from "../Page/admin/AdminDashBoard";
 import Dashboard from "../Page/admin/DashBoard.jsx";
 import BlogsPage from "../Page/admin/BlogsPage";
 import UserPage from "../Page/admin/UserPage";
+import ProfilePage from "../Page/ProfilePage.jsx";
 
 const Routers = createBrowserRouter([
   {
@@ -30,7 +31,15 @@ const Routers = createBrowserRouter([
         element: <BlogList />,
       },
       {
+        path: "/blog/:slug",
+        element: <BlogDetails />,
+      },
+      {
         path: "/createBlogs",
+        element: <CreateBlogs />,
+      },
+      {
+        path: "/editBlog/:slug",
         element: <CreateBlogs />,
       },
       {

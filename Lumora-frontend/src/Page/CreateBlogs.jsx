@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
   Eye,
@@ -21,17 +22,15 @@ const CLOUDINARY_UPLOAD_PRESET =
   import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "Lumora";
 
 export default function CreateBlogs() {
-  const [title, setTitle] = React.useState("The architecture of silence.");
+  const { slug } = useParams();
+  const navigate = useNavigate();
+  const isEditing = Boolean(slug);
+
+  const [title, setTitle] = React.useState("");
 
   const [subtitle, setSubtitle] = React.useState("");
 
-  const [content, setContent] = React.useState(
-    `Every great design begins with an even better story. Begin yours here...
-
-The Foundation
-
-Minimalism isn't about removing things until there is nothing left. It's about removing the unnecessary so that the necessary may speak.`,
-  );
+  const [content, setContent] = React.useState("");
 
   const [coverImage, setCoverImage] = React.useState("");
 
@@ -46,6 +45,37 @@ Minimalism isn't about removing things until there is nothing left. It's about r
   const [message, setMessage] = React.useState(null);
 
   const fileInputRef = React.useRef(null);
+
+  React.useEffect(() => {
+    if (!isEditing) {
+      setTitle("The architecture of silence.");
+      return;
+    }
+
+    const loadBlog = async () => {
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/blog/${encodeURIComponent(slug)}`,
+        );
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+          throw new Error(result.message || "Unable to load blog.");
+        }
+
+        const blog = result.data;
+        setTitle(blog.title || "");
+        setSubtitle(blog.excerpt || "");
+        setContent(blog.content || "");
+        setCoverImage(blog.coverImage || "");
+        setImagePreview(blog.coverImage || "");
+      } catch (error) {
+        setMessage({ type: "error", text: error.message });
+      }
+    };
+
+    loadBlog();
+  }, [isEditing, slug]);
 
   const handleTitleChange = (e) => {
     const value = e.target.value;
@@ -190,22 +220,27 @@ Minimalism isn't about removing things until there is nothing left. It's about r
     try {
       const payload = {
         title: title.trim(),
+        excerpt: subtitle.trim() || undefined,
         content: content.trim(),
-
         coverImage,
       };
 
       const accessToken = localStorage.getItem("accessToken");
 
-      const response = await fetch(`${API_BASE_URL}/blog`, {
-        method: "POST",
+      const response = await fetch(
+        isEditing
+          ? `${API_BASE_URL}/blog/${encodeURIComponent(slug)}`
+          : `${API_BASE_URL}/blog`,
+        {
+        method: isEditing ? "PATCH" : "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `${accessToken}`,
         },
 
         body: JSON.stringify(payload),
-      });
+      },
+      );
 
       const result = await response.json();
 
@@ -217,10 +252,14 @@ Minimalism isn't about removing things until there is nothing left. It's about r
 
       setMessage({
         type: "success",
-        text: result?.message || "Blog published successfully.",
+        text:
+          result?.message ||
+          (isEditing ? "Blog updated successfully." : "Blog saved as draft."),
       });
 
-      console.log("Created blog:", result);
+      if (isEditing) {
+        navigate("/profilePage");
+      }
     } catch (error) {
       console.error("Create blog error:", error);
 
@@ -259,7 +298,7 @@ Minimalism isn't about removing things until there is nothing left. It's about r
               <span className="w-1.5 h-1.5 rounded-full bg-orange-400 shrink-0" />
 
               <span className="truncate">
-                {publishing ? "Publishing..." : "Draft ready"}
+                {publishing ? (isEditing ? "Saving..." : "Saving draft...") : isEditing ? "Editing blog" : "Draft ready"}
               </span>
             </div>
           </div>
@@ -292,11 +331,11 @@ Minimalism isn't about removing things until there is nothing left. It's about r
               {publishing ? (
                 <>
                   <Loader2 size={14} className="animate-spin" />
-                  Publishing...
+                  {isEditing ? "Saving..." : "Saving draft..."}
                 </>
               ) : (
                 <>
-                  Publish
+                  {isEditing ? "Save changes" : "Save draft"}
                   <ChevronDown size={14} />
                 </>
               )}

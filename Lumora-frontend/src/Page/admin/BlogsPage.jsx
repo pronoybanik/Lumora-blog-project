@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Search,
   Plus,
@@ -163,6 +164,7 @@ function PageShell({ title, subtitle, cta, children }) {
 }
 
 export default function BlogsPage() {
+  const navigate = useNavigate();
   const [blogs, setBlogs] = useState([]);
 
   const [loading, setLoading] = useState(true);
@@ -184,6 +186,7 @@ export default function BlogsPage() {
 
   /* Delete error */
   const [deleteError, setDeleteError] = useState("");
+  const [statusUpdating, setStatusUpdating] = useState(false);
 
   const ITEMS_PER_PAGE = 20;
 
@@ -449,6 +452,38 @@ export default function BlogsPage() {
     }
   };
 
+  const handleStatusChange = async (blog, nextStatus) => {
+    try {
+      setStatusUpdating(true);
+      setDeleteError("");
+
+      const response = await fetch(
+        `${API_BASE_URL}/blog/${encodeURIComponent(blog.slug)}`,
+        {
+          method: "PATCH",
+          headers: getAuthHeaders(),
+          body: JSON.stringify({ status: nextStatus }),
+        },
+      );
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || "Unable to update blog status.");
+      }
+
+      setBlogs((previousBlogs) =>
+        previousBlogs.map((item) =>
+          item.id === blog.id ? { ...item, ...result.data } : item,
+        ),
+      );
+      setActionBlog(null);
+    } catch (err) {
+      setDeleteError(err.message || "Unable to update blog status.");
+    } finally {
+      setStatusUpdating(false);
+    }
+  };
+
   /* =======================================================
      Loading
   ======================================================= */
@@ -476,6 +511,7 @@ export default function BlogsPage() {
       cta={
         <button
           type="button"
+          onClick={() => navigate("/createBlogs")}
           className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-indigo-500"
         >
           <Plus className="h-4 w-4" />
@@ -1035,12 +1071,10 @@ export default function BlogsPage() {
 
               <button
                 type="button"
-                disabled={deleting}
+                disabled={deleting || statusUpdating}
                 className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-40"
                 onClick={() => {
-                  console.log("Edit blog:", actionBlog.id);
-
-                  setActionBlog(null);
+                  navigate(`/editBlog/${encodeURIComponent(actionBlog.slug)}`);
                 }}
               >
                 <Pencil className="h-4 w-4" />
@@ -1051,23 +1085,57 @@ export default function BlogsPage() {
 
               <button
                 type="button"
-                disabled={deleting}
+                disabled={deleting || statusUpdating}
                 className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-40"
                 onClick={() => {
-                  console.log("View blog:", actionBlog.slug);
-
-                  setActionBlog(null);
+                  navigate(`/blog/${encodeURIComponent(actionBlog.slug)}`);
                 }}
               >
                 <ExternalLink className="h-4 w-4" />
                 View blog
               </button>
 
+              {actionBlog.status !== "PUBLISHED" && (
+                <button
+                  type="button"
+                  disabled={deleting || statusUpdating}
+                  className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm text-emerald-700 hover:bg-emerald-50 disabled:opacity-40"
+                  onClick={() => handleStatusChange(actionBlog, "PUBLISHED")}
+                >
+                  {statusUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Eye className="h-4 w-4" />}
+                  Publish blog
+                </button>
+              )}
+
+              {actionBlog.status === "PUBLISHED" && (
+                <button
+                  type="button"
+                  disabled={deleting || statusUpdating}
+                  className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm text-amber-700 hover:bg-amber-50 disabled:opacity-40"
+                  onClick={() => handleStatusChange(actionBlog, "DRAFT")}
+                >
+                  {statusUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
+                  Move to draft
+                </button>
+              )}
+
+              {actionBlog.status !== "ARCHIVED" && (
+                <button
+                  type="button"
+                  disabled={deleting || statusUpdating}
+                  className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm text-orange-700 hover:bg-orange-50 disabled:opacity-40"
+                  onClick={() => handleStatusChange(actionBlog, "ARCHIVED")}
+                >
+                  {statusUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
+                  Archive blog
+                </button>
+              )}
+
               {/* DELETE */}
 
               <button
                 type="button"
-                disabled={deleting}
+                disabled={deleting || statusUpdating}
                 className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm text-red-500 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
                 onClick={() => handleDeleteBlog(actionBlog)}
               >

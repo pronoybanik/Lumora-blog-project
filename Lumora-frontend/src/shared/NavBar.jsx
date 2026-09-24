@@ -6,7 +6,7 @@ const NavBar = () => {
   const navigate = useNavigate();
   const { user, loading, logout } = useAuth();
 
-  console.log(user)
+  console.log(user);
 
   const handleLogout = () => {
     logout();
@@ -37,22 +37,21 @@ const NavBar = () => {
           <a href="#" className="hover:text-slate-900">
             Categories
           </a> */}
-          <Link to="/pricing" className="hover:text-slate-900">
-            Pricing
+          <Link to="/" className="hover:text-slate-900">
+            Home
           </Link>
           <Link to="/blogList" className="hover:text-slate-900">
             Blog List
           </Link>
-          <Link to="/createBlogs" className="hover:text-slate-900">
-            create Blogs
+          <Link to="/pricing" className="hover:text-slate-900">
+            Pricing
           </Link>
-          {user && (
-            <Link to="/profilePage" className="hover:text-slate-900">
-              profile Page
-            </Link>
-          )}
+
           {user?.role === "ADMIN" && (
-            <Link to="/adminDashboard/dashboard" className="hover:text-slate-900">
+            <Link
+              to="/adminDashboard/dashboard"
+              className="hover:text-slate-900"
+            >
               admin dashboard
             </Link>
           )}
@@ -73,7 +72,10 @@ const NavBar = () => {
             <span>Search articles...</span>
           </div>
           {user && (
-            <Link to="/createBlogs" className="bg-indigo-600 hover:bg-indigo-700 transition-colors text-white text-sm font-medium px-4 py-2 rounded-full">
+            <Link
+              to="/createBlogs"
+              className="bg-indigo-600 hover:bg-indigo-700 transition-colors text-white text-sm font-medium px-4 py-2 rounded-full"
+            >
               Write
             </Link>
           )}
@@ -88,34 +90,46 @@ const NavBar = () => {
               <path d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 0 0-4-5.65V5a2 2 0 1 0-4 0v.35A6 6 0 0 0 6 11v3.2a2 2 0 0 1-.6 1.4L4 17h5m6 0v1a3 3 0 1 1-6 0v-1m6 0H9" />
             </svg>
           </button>
-          {!loading && (user ? (
-            <div className="flex items-center gap-2">
-              <Link to="/profilePage" className="flex items-center gap-2 text-sm font-medium text-slate-700 hover:text-indigo-700">
-                <span className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-xs font-bold">
-                  {initials || "U"}
-                </span>
-                <span className="hidden lg:inline max-w-24 truncate">{user.name}</span>
-              </Link>
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="text-slate-500 hover:text-red-600 transition-colors"
-                aria-label="Log out"
-                title="Log out"
-              >
-                <LogOut className="w-4 h-4" />
-              </button>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <Link to="/login" className="text-sm font-medium text-slate-600 hover:text-indigo-700 px-3 py-2 rounded-full transition-colors">
-                Log in
-              </Link>
-              <Link to="/register" className="bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 transition-colors text-white text-sm font-medium px-4 py-2 rounded-full shadow-sm shadow-indigo-200">
-                Sign up
-              </Link>
-            </div>
-          ))}
+          {!loading &&
+            (user ? (
+              <div className="flex items-center gap-2">
+                <Link
+                  to="/profilePage"
+                  className="flex items-center gap-2 text-sm font-medium text-slate-700 hover:text-indigo-700"
+                >
+                  <span className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-xs font-bold">
+                    {initials || "U"}
+                  </span>
+                  <span className="hidden lg:inline max-w-24 truncate">
+                    {user.name}
+                  </span>
+                </Link>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="text-slate-500 hover:text-red-600 transition-colors"
+                  aria-label="Log out"
+                  title="Log out"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Link
+                  to="/login"
+                  className="text-sm font-medium text-slate-600 hover:text-indigo-700 px-3 py-2 rounded-full transition-colors"
+                >
+                  Log in
+                </Link>
+                <Link
+                  to="/register"
+                  className="bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 transition-colors text-white text-sm font-medium px-4 py-2 rounded-full shadow-sm shadow-indigo-200"
+                >
+                  Sign up
+                </Link>
+              </div>
+            ))}
         </div>
       </div>
     </header>

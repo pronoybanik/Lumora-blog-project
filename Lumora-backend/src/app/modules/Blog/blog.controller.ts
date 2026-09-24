@@ -45,6 +45,50 @@ const getBlogBySlug = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const toggleLike = catchAsync(async (req: Request, res: Response) => {
+  const result = await blogServices.toggleLike(
+    String(req.params.slug),
+    req.user!.id,
+  );
+
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: result.liked ? "Blog liked" : "Blog unliked",
+    data: result,
+  });
+});
+
+const getLikeStatus = catchAsync(async (req: Request, res: Response) => {
+  const result = await blogServices.getLikeStatus(
+    String(req.params.slug),
+    req.user!.id,
+  );
+
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: "Like status fetched",
+    data: result,
+  });
+});
+
+const createComment = catchAsync(async (req: Request, res: Response) => {
+  const result = await blogServices.createComment(
+    String(req.params.slug),
+    req.user!.id,
+    req.body.content,
+    req.body.parentId,
+  );
+
+  sendResponse(res, {
+    statusCode: StatusCodes.CREATED,
+    success: true,
+    message: "Comment added successfully",
+    data: result,
+  });
+});
+
 const updateBlog = catchAsync(async (req: Request, res: Response) => {
   const slug = req.params.slug as string;
   const result = await blogServices.updateBlog(slug, req.body, req.user!);
@@ -72,6 +116,9 @@ export const blogController = {
   getBlogs,
   getMyBlogs,
   getBlogBySlug,
+  toggleLike,
+  getLikeStatus,
+  createComment,
   updateBlog,
   deleteBlog,
 };

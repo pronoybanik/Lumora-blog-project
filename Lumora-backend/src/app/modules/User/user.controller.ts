@@ -41,6 +41,44 @@ const getALlUser = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getAuthors = catchAsync(async (_req: Request, res: Response) => {
+  const result = await userServices.getAuthors();
+
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: "Authors fetched successfully!",
+    data: result,
+  });
+});
+
+const toggleFollow = catchAsync(async (req: Request, res: Response) => {
+  const result = await userServices.toggleFollow(
+    String(req.params.id),
+    req.user!.id,
+  );
+
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: result.following ? "Author followed" : "Author unfollowed",
+    data: result,
+  });
+});
+
+const getFollowStatus = catchAsync(async (req: Request, res: Response) => {
+  const result = await userServices.getFollowStatus(
+    String(req.params.id),
+    req.user!.id,
+  );
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: "Follow status fetched",
+    data: result,
+  });
+});
+
 const deleteUser = catchAsync(async (req: Request, res: Response) => {
   const result = await userServices.deleteUser(String(req.params.id));
 
@@ -56,5 +94,8 @@ export const userController = {
   getMyProfile,
   updateMyProfile,
   getALlUser,
+  getAuthors,
+  toggleFollow,
+  getFollowStatus,
   deleteUser,
 };
