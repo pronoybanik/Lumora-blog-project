@@ -1,8 +1,7 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Link2,
   Mail,
-  MessageCircle,
   BadgeCheck,
   FileText,
   Eye,
@@ -200,11 +199,13 @@ function PublicationCard({ blog, viewMode }) {
           </span>
 
           <span className="flex items-center gap-1">
-            <Heart className="w-3.5 h-3.5" strokeWidth={2} />0
+            <Heart className="w-3.5 h-3.5" strokeWidth={2} />
+            {blog._count?.likes ?? 0}
           </span>
 
           <span className="flex items-center gap-1">
-            <MessageSquare className="w-3.5 h-3.5" strokeWidth={2} />0
+            <MessageSquare className="w-3.5 h-3.5" strokeWidth={2} />
+            {blog._count?.comments ?? 0}
           </span>
         </div>
       </div>
@@ -606,8 +607,10 @@ export default function ProfilePage() {
   ======================================================= */
 
   useEffect(() => {
-    fetchMyProfile();
-    fetchMyBlogs();
+    queueMicrotask(() => {
+      fetchMyProfile();
+      fetchMyBlogs();
+    });
   }, []);
 
   /* =======================================================
@@ -862,6 +865,11 @@ export default function ProfilePage() {
                 {profile.bio || "Tell the world something about yourself."}
               </p>
 
+              <div className="mt-4 flex gap-5 text-sm text-slate-600">
+                <span><strong className="text-slate-900">{user?._count?.followers ?? user?.followers?.length ?? 0}</strong> Followers</span>
+                <span><strong className="text-slate-900">{user?._count?.following ?? user?.following?.length ?? 0}</strong> Following</span>
+              </div>
+
               {/* Social Links */}
               <div className="flex gap-2 mt-3">
                 {profile.website && (
@@ -1038,6 +1046,30 @@ export default function ProfilePage() {
                     </div>
                   </div>
                 )}
+              </div>
+            </div>
+
+            <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-5">
+              <h3 className="text-xs font-semibold tracking-wide text-slate-500 mb-4">NETWORK</h3>
+              <div className="space-y-4">
+                <div>
+                  <p className="mb-2 text-xs font-medium text-slate-500">Followers</p>
+                  <div className="space-y-2">
+                    {(user?.followers || []).slice(0, 4).map(({ follower }) => (
+                      <p key={follower.id} className="truncate text-sm text-slate-700">{follower.name}</p>
+                    ))}
+                    {!user?.followers?.length && <p className="text-sm text-slate-400">No followers yet.</p>}
+                  </div>
+                </div>
+                <div>
+                  <p className="mb-2 text-xs font-medium text-slate-500">Following</p>
+                  <div className="space-y-2">
+                    {(user?.following || []).slice(0, 4).map(({ following }) => (
+                      <p key={following.id} className="truncate text-sm text-slate-700">{following.name}</p>
+                    ))}
+                    {!user?.following?.length && <p className="text-sm text-slate-400">Not following anyone yet.</p>}
+                  </div>
+                </div>
               </div>
             </div>
 

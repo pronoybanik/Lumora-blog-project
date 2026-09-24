@@ -73,6 +73,22 @@ const getLikeStatus = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const createComment = catchAsync(async (req: Request, res: Response) => {
+  const result = await blogServices.createComment(
+    String(req.params.slug),
+    req.user!.id,
+    req.body.content,
+    req.body.parentId,
+  );
+
+  sendResponse(res, {
+    statusCode: StatusCodes.CREATED,
+    success: true,
+    message: "Comment added successfully",
+    data: result,
+  });
+});
+
 const updateBlog = catchAsync(async (req: Request, res: Response) => {
   const slug = req.params.slug as string;
   const result = await blogServices.updateBlog(slug, req.body, req.user!);
@@ -102,6 +118,7 @@ export const blogController = {
   getBlogBySlug,
   toggleLike,
   getLikeStatus,
+  createComment,
   updateBlog,
   deleteBlog,
 };
