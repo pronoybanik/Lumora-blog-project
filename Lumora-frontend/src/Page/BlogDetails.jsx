@@ -32,6 +32,11 @@ export default function BlogDetails() {
   const [liked, setLiked] = React.useState(false);
   const [likes, setLikes] = React.useState(0);
   const [likeLoading, setLikeLoading] = React.useState(false);
+  const [comments, setComments] = React.useState([]);
+  const [commentText, setCommentText] = React.useState("");
+  const [replyFor, setReplyFor] = React.useState(null);
+  const [replyText, setReplyText] = React.useState("");
+  const [commentLoading, setCommentLoading] = React.useState(false);
 
   React.useEffect(() => {
     const loadBlog = async () => {
@@ -48,6 +53,7 @@ export default function BlogDetails() {
           throw new Error(result.message || "Failed to load this blog.");
         }
         setBlog(result.data);
+        setComments(result.data.comments || []);
         setLikes(result.data._count?.likes ?? 0);
 
         const token = localStorage.getItem("accessToken");
@@ -84,6 +90,41 @@ export default function BlogDetails() {
   }
 
   const commentCount = blog._count?.comments ?? blog.comments?.length ?? 0;
+
+  const submitComment = async (content, parentId = null) => {
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+      window.location.href = "/login";
+      return;
+    }
+    if (!content.trim()) return;
+
+    try {
+      setCommentLoading(true);
+      const response = await fetch(`${API_BASE_URL}/blog/${encodeURIComponent(slug)}/comments`, {
+        method: "POST",
+        headers: { Authorization: token, "Content-Type": "application/json" },
+        body: JSON.stringify({ content, parentId }),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.success) throw new Error(result.message || "Unable to add comment.");
+
+      if (parentId) {
+        setComments((previous) => previous.map((comment) => comment.id === parentId
+          ? { ...comment, replies: [...(comment.replies || []), result.data] }
+          : comment));
+        setReplyText("");
+        setReplyFor(null);
+      } else {
+        setComments((previous) => [result.data, ...previous]);
+        setCommentText("");
+      }
+    } catch (requestError) {
+      setError(requestError.message || "Unable to add comment.");
+    } finally {
+      setCommentLoading(false);
+    }
+  };
 
   const handleLike = async () => {
     const token = localStorage.getItem("accessToken");
@@ -129,7 +170,7 @@ export default function BlogDetails() {
             <span>•</span>
             <span>{getReadTime(blog.content)}</span>
             <span className="inline-flex items-center gap-1"><Eye size={15} /> {blog.viewCount ?? 0}</span>
-            <span className="inline-flex items-center gap-1"><MessageCircle size={15} /> {commentCount}</span>
+            <span className="inline-flex items-center gap-1"><MessageCircle size={15} /> {comments.length || commentCount}</span>
             <button type="button" onClick={handleLike} disabled={likeLoading} className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 font-medium ${liked ? "bg-rose-100 text-rose-700" : "bg-white text-slate-600"} disabled:opacity-50`}>
               <Heart size={15} fill={liked ? "currentColor" : "none"} /> {likes}
             </button>
@@ -138,6 +179,49 @@ export default function BlogDetails() {
         
 
         <div className="whitespace-pre-wrap border-t border-slate-200 pt-8 text-lg leading-8 text-slate-700">{blog.content}</div>
+
+        <section className="mt-14 border-t border-slate-200 pt-8">
+          <h2 className="text-2xl font-bold">Comments ({commentCount})</h2>
+          <div className="mt-5 flex gap-3">
+            <textarea
+              value={commentText}
+              onChange={(event) => setCommentText(event.target.value)}
+              placeholder="Share your thoughts..."
+              rows={3}
+              className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-white p-3 text-sm outline-none focus:border-indigo-400"
+            />
+            <button type="button" onClick={() => submitComment(commentText)} disabled={commentLoading || !commentText.trim()} className="self-end rounded-xl bg-indigo-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
+              Comment
+            </button>
+          </div>
+
+          <div className="mt-8 space-y-6">
+            {comments.length === 0 && <p className="text-sm text-slate-500">Be the first to comment.</p>}
+            {comments.map((comment) => (
+              <div key={comment.id} className="border-b border-slate-100 pb-5">
+                <p className="text-sm font-semibold text-slate-900">{comment.user?.name || "Lumora reader"}</p>
+                <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-slate-700">{comment.content}</p>
+                <button type="button" onClick={() => setReplyFor(replyFor === comment.id ? null : comment.id)} className="mt-2 text-xs font-semibold text-indigo-700">Reply</button>
+                {replyFor === comment.id && (
+                  <div className="mt-3 flex gap-2">
+                    <input value={replyText} onChange={(event) => setReplyText(event.target.value)} placeholder="Write a reply..." className="min-w-0 flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-indigo-400" />
+                    <button type="button" onClick={() => submitComment(replyText, comment.id)} disabled={commentLoading || !replyText.trim()} className="rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50">Send</button>
+                  </div>
+                )}
+                {(comment.replies || []).length > 0 && (
+                  <div className="mt-4 ml-5 space-y-3 border-l-2 border-indigo-100 pl-4">
+                    {comment.replies.map((reply) => (
+                      <div key={reply.id}>
+                        <p className="text-xs font-semibold text-slate-800">{reply.user?.name || "Lumora reader"}</p>
+                        <p className="mt-1 whitespace-pre-wrap text-sm text-slate-600">{reply.content}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
       </article>
     </main>
   );

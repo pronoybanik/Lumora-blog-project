@@ -29,6 +29,15 @@ const getMyProfile = async (user: { id: string }) => {
       createdAt: true,
       updatedAt: true,
       profile: true,
+      _count: { select: { followers: true, following: true } },
+      followers: {
+        select: { follower: { select: { id: true, name: true, profile: true } } },
+        orderBy: { createdAt: "desc" },
+      },
+      following: {
+        select: { following: { select: { id: true, name: true, profile: true } } },
+        orderBy: { createdAt: "desc" },
+      },
     },
   });
 
@@ -103,6 +112,13 @@ const toggleFollow = async (followingId: string, followerId: string) => {
   };
 };
 
+const getFollowStatus = async (followingId: string, followerId: string) => {
+  const follow = await prisma.follow.findUnique({
+    where: { followerId_followingId: { followerId, followingId } },
+  });
+  return { following: Boolean(follow) };
+};
+
 const deleteUser = async (userId: string) => {
   return prisma.user.delete({
     where: {
@@ -117,5 +133,6 @@ export const userServices = {
   getALlUser,
   getAuthors,
   toggleFollow,
+  getFollowStatus,
   deleteUser,
 };

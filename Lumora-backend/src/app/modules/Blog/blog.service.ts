@@ -76,7 +76,10 @@ const getMyBlogs = async (user: AuthenticatedUser) =>
   prisma.blog.findMany({
     where: { authorId: user.id },
     orderBy: { createdAt: "desc" },
-    include: { author: { select: { id: true, name: true } } },
+    include: {
+      author: { select: { id: true, name: true } },
+      _count: { select: { comments: true, likes: true } },
+    },
   });
 
 const getBlogBySlug = async (slug: string) => {
@@ -90,11 +93,46 @@ const getBlogBySlug = async (slug: string) => {
     include: {
       author: { select: { id: true, name: true } },
       comments: {
+        where: { parentId: null },
         orderBy: { createdAt: "desc" },
-        include: { user: { select: { id: true, name: true } } },
+        include: {
+          user: { select: { id: true, name: true } },
+          replies: {
+            orderBy: { createdAt: "asc" },
+            include: { user: { select: { id: true, name: true } } },
+          },
+        },
       },
       _count: { select: { comments: true, likes: true } },
     },
+  });
+};
+
+const createComment = async (
+  slug: string,
+  userId: string,
+  content: string,
+  parentId?: string,
+) => {
+  const blog = await prisma.blog.findUniqueOrThrow({ where: { slug } });
+  const trimmedContent = content?.trim();
+
+  if (!trimmedContent) {
+    throw new ApiError(StatusCodes.BAD_REQUEST, "Comment cannot be empty");
+  }
+
+  if (parentId) {
+    const parent = await prisma.comment.findFirst({
+      where: { id: parentId, blogId: blog.id },
+    });
+    if (!parent) {
+      throw new ApiError(StatusCodes.NOT_FOUND, "Parent comment not found");
+    }
+  }
+
+  return prisma.comment.create({
+    data: { content: trimmedContent, userId, blogId: blog.id, parentId },
+    include: { user: { select: { id: true, name: true } } },
   });
 };
 
@@ -187,6 +225,7 @@ export const blogServices = {
   getBlogBySlug,
   toggleLike,
   getLikeStatus,
+  createComment,
   updateBlog,
   deleteBlog,
 };

@@ -15,6 +15,36 @@ const fallbackImages = [
   "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&h=600&fit=crop",
 ];
 const filters = ["All", "Design", "Tech", "Business"];
+const BLOG_LIST_CACHE_KEY = "lumora:blog-list:v1";
+const BLOG_LIST_CACHE_TTL = 60 * 1000;
+
+const readBlogListCache = () => {
+  try {
+    const cached = JSON.parse(sessionStorage.getItem(BLOG_LIST_CACHE_KEY));
+
+    if (!cached || !Array.isArray(cached.blogs) || !Array.isArray(cached.authors)) {
+      return null;
+    }
+
+    return {
+      ...cached,
+      isFresh: Date.now() - cached.timestamp < BLOG_LIST_CACHE_TTL,
+    };
+  } catch {
+    return null;
+  }
+};
+
+const writeBlogListCache = (blogs, authors) => {
+  try {
+    sessionStorage.setItem(
+      BLOG_LIST_CACHE_KEY,
+      JSON.stringify({ blogs, authors, timestamp: Date.now() }),
+    );
+  } catch {
+    // Caching is optional; the API response is still used normally.
+  }
+};
 
 const cleanImageUrl = (value) => {
   if (!value) return "";
@@ -63,6 +93,20 @@ function AuthorCard({ author, onFollow }) {
   const [following, setFollowing] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
   const profile = author.profile || {};
+
+  React.useEffect(() => {
+    const token = getToken();
+    if (!token) return;
+
+    fetch(`${API_BASE_URL}/user/${author.id}/follow/status`, {
+      headers: { Authorization: token },
+    })
+      .then((response) => response.json())
+      .then((result) => {
+        if (result.success) setFollowing(result.data.following);
+      })
+      .catch(() => {});
+  }, [author.id]);
 
   const handleFollow = async () => {
     const token = getToken();
@@ -137,6 +181,15 @@ export default function BlogList() {
         setLoading(false);
         return;
       }
+
+      const cached = readBlogListCache();
+      if (cached) {
+        setBlogs(cached.blogs);
+        setAuthors(cached.authors);
+        setLoading(false);
+        if (cached.isFresh) return;
+      }
+
       try {
         const [blogsResponse, authorsResponse] = await Promise.all([
           fetch(`${API_BASE_URL}/blog`),
@@ -146,8 +199,13 @@ export default function BlogList() {
         const authorsResult = await authorsResponse.json();
         if (!blogsResponse.ok || !result.success)
           throw new Error(result.message || "Failed to load blogs.");
-        setBlogs(Array.isArray(result.data) ? result.data : []);
-        setAuthors(Array.isArray(authorsResult.data) ? authorsResult.data : []);
+        const nextBlogs = Array.isArray(result.data) ? result.data : [];
+        const nextAuthors = Array.isArray(authorsResult.data)
+          ? authorsResult.data
+          : [];
+        setBlogs(nextBlogs);
+        setAuthors(nextAuthors);
+        writeBlogListCache(nextBlogs, nextAuthors);
       } catch (requestError) {
         setError(requestError.message || "Unable to load blogs right now.");
       } finally {

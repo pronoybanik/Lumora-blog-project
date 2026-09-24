@@ -35,6 +35,12 @@ router.post(
     userController.toggleFollow
 );
 
+router.get(
+    '/:id/follow/status',
+    auth(),
+    userController.getFollowStatus
+);
+
 router.patch(
     '/profile',
     auth(),
