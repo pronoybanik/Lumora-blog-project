@@ -135,6 +135,7 @@ export default function BlogDetails() {
             </button>
           </div>
         </div>
+        
 
         <div className="whitespace-pre-wrap border-t border-slate-200 pt-8 text-lg leading-8 text-slate-700">{blog.content}</div>
       </article>

@@ -79,25 +79,24 @@ const getMyBlogs = async (user: AuthenticatedUser) =>
     include: { author: { select: { id: true, name: true } } },
   });
 
-const getBlogBySlug = async (slug: string) =>
-  prisma.$transaction(async (transaction) => {
-    await transaction.blog.update({
-      where: { slug },
-      data: { viewCount: { increment: 1 } },
-    });
-
-    return transaction.blog.findUniqueOrThrow({
-      where: { slug },
-      include: {
-        author: { select: { id: true, name: true } },
-        comments: {
-          orderBy: { createdAt: "desc" },
-          include: { user: { select: { id: true, name: true } } },
-        },
-        _count: { select: { comments: true, likes: true } },
-      },
-    });
+const getBlogBySlug = async (slug: string) => {
+  await prisma.blog.update({
+    where: { slug },
+    data: { viewCount: { increment: 1 } },
   });
+
+  return prisma.blog.findUniqueOrThrow({
+    where: { slug },
+    include: {
+      author: { select: { id: true, name: true } },
+      comments: {
+        orderBy: { createdAt: "desc" },
+        include: { user: { select: { id: true, name: true } } },
+      },
+      _count: { select: { comments: true, likes: true } },
+    },
+  });
+};
 
 const toggleLike = async (slug: string, userId: string) => {
   const blog = await prisma.blog.findUniqueOrThrow({ where: { slug } });
