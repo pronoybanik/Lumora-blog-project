@@ -46,7 +46,7 @@ const TrendingAndVoices = () => {
      const handleFollow = async (authorId) => {
        const token = localStorage.getItem("accessToken");
        if (!token) {
-         window.location.href = "/login";
+         window.location.assign("/login");
          return;
        }
 
