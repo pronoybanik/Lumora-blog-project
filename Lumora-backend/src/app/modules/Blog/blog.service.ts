@@ -69,7 +69,7 @@ const createBlog = async (payload: BlogPayload, user: AuthenticatedUser) => {
 const getBlogs = async () =>
   prisma.blog.findMany({
     orderBy: { createdAt: "desc" },
-    include: { author: { select: { id: true, name: true } } },
+    include: { author: { select: { id: true, name: true, email: true } } },
   });
 
 const getMyBlogs = async (user: AuthenticatedUser) =>
@@ -80,14 +80,51 @@ const getMyBlogs = async (user: AuthenticatedUser) =>
   });
 
 const getBlogBySlug = async (slug: string) =>
-  prisma.blog.findUniqueOrThrow({
-    where: { slug },
-    include: {
-      author: { select: { id: true, name: true } },
-      comments: true,
-      likes: true,
-    },
+  prisma.$transaction(async (transaction) => {
+    await transaction.blog.update({
+      where: { slug },
+      data: { viewCount: { increment: 1 } },
+    });
+
+    return transaction.blog.findUniqueOrThrow({
+      where: { slug },
+      include: {
+        author: { select: { id: true, name: true } },
+        comments: {
+          orderBy: { createdAt: "desc" },
+          include: { user: { select: { id: true, name: true } } },
+        },
+        _count: { select: { comments: true, likes: true } },
+      },
+    });
   });
+
+const toggleLike = async (slug: string, userId: string) => {
+  const blog = await prisma.blog.findUniqueOrThrow({ where: { slug } });
+  const existingLike = await prisma.like.findUnique({
+    where: { userId_blogId: { userId, blogId: blog.id } },
+  });
+
+  if (existingLike) {
+    await prisma.like.delete({ where: { id: existingLike.id } });
+  } else {
+    await prisma.like.create({ data: { userId, blogId: blog.id } });
+  }
+
+  return {
+    liked: !existingLike,
+    likes: await prisma.like.count({ where: { blogId: blog.id } }),
+  };
+};
+
+const getLikeStatus = async (slug: string, userId: string) => {
+  const blog = await prisma.blog.findUniqueOrThrow({ where: { slug } });
+  const like = await prisma.like.findUnique({
+    where: { userId_blogId: { userId, blogId: blog.id } },
+  });
+
+  return { liked: Boolean(like) };
+};
 
 const updateBlog = async (
   slug: string,
@@ -101,6 +138,13 @@ const updateBlog = async (
     throw new ApiError(StatusCodes.FORBIDDEN, "You cannot update this blog");
   }
 
+  if (payload.status !== undefined && user.role !== "ADMIN") {
+    throw new ApiError(
+      StatusCodes.FORBIDDEN,
+      "Only admins can change blog publication status",
+    );
+  }
+
   const titleChanged =
     payload.title !== undefined && payload.title !== blog.title;
   const statusChangedToPublished =
@@ -110,7 +154,13 @@ const updateBlog = async (
   return prisma.blog.update({
     where: { id: blog.id },
     data: {
-      ...payload,
+      ...(payload.title !== undefined ? { title: payload.title } : {}),
+      ...(payload.excerpt !== undefined ? { excerpt: payload.excerpt } : {}),
+      ...(payload.content !== undefined ? { content: payload.content } : {}),
+      ...(payload.coverImage !== undefined
+        ? { coverImage: payload.coverImage }
+        : {}),
+      ...(payload.status !== undefined ? { status: payload.status } : {}),
       ...(titleChanged
         ? { slug: await getUniqueSlug(payload.title!, blog.id) }
         : {}),
@@ -136,6 +186,8 @@ export const blogServices = {
   getBlogs,
   getMyBlogs,
   getBlogBySlug,
+  toggleLike,
+  getLikeStatus,
   updateBlog,
   deleteBlog,
 };
