@@ -2,6 +2,12 @@
   "name": "lumora-backend",
   "version": "1.0.0",
   "description": "",
+  "allowScripts": {
+    "@prisma/engines": true,
+    "bcrypt": true,
+    "esbuild": true,
+    "prisma": true
+  },
   "main": "index.js",
   "scripts": {
     "start": "node dist/server.js",
