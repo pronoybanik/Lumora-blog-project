@@ -6,6 +6,7 @@ import {
   History,
   CreditCard,
   Home,
+  Tags,
 } from "lucide-react";
 import { Link, NavLink, Outlet } from "react-router-dom";
 
@@ -31,6 +32,11 @@ const menuItems = [
     icon: Edit3,
     label: "My Blogs",
     routes: "/adminDashboard/BlogPage",
+  },
+  {
+    icon: Tags,
+    label: "Categories",
+    routes: "/adminDashboard/categories",
   },
   {
     icon: Bookmark,
