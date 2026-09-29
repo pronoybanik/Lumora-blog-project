@@ -25,7 +25,7 @@ const cleanImageUrl = (value) => {
 };
 
 export default function BlogDetails() {
-  const { slug } = useParams();
+  const { id } = useParams();
   const [blog, setBlog] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState("");
@@ -40,14 +40,14 @@ export default function BlogDetails() {
 
   React.useEffect(() => {
     const loadBlog = async () => {
-      if (!API_BASE_URL || !slug) {
+      if (!API_BASE_URL || !id) {
         setError("The blog could not be loaded.");
         setLoading(false);
         return;
       }
 
       try {
-        const response = await fetch(`${API_BASE_URL}/blog/${encodeURIComponent(slug)}`);
+        const response = await fetch(`${API_BASE_URL}/blog/${encodeURIComponent(id)}`);
         const result = await response.json();
         if (!response.ok || !result.success) {
           throw new Error(result.message || "Failed to load this blog.");
@@ -58,7 +58,7 @@ export default function BlogDetails() {
 
         const token = localStorage.getItem("accessToken");
         if (token) {
-          const likeResponse = await fetch(`${API_BASE_URL}/blog/${encodeURIComponent(slug)}/like`, {
+          const likeResponse = await fetch(`${API_BASE_URL}/blog/${encodeURIComponent(result.data.id)}/like`, {
             headers: { Authorization: token },
           });
           const likeResult = await likeResponse.json();
@@ -72,7 +72,7 @@ export default function BlogDetails() {
     };
 
     loadBlog();
-  }, [slug]);
+  }, [id]);
 
   if (loading) {
     return <main className="min-h-screen bg-[#f4f4fb] px-6 py-20 text-center text-slate-500">Loading article...</main>;
@@ -101,7 +101,7 @@ export default function BlogDetails() {
 
     try {
       setCommentLoading(true);
-      const response = await fetch(`${API_BASE_URL}/blog/${encodeURIComponent(slug)}/comments`, {
+      const response = await fetch(`${API_BASE_URL}/blog/${encodeURIComponent(blog.id)}/comments`, {
         method: "POST",
         headers: { Authorization: token, "Content-Type": "application/json" },
         body: JSON.stringify({ content, parentId }),
@@ -135,7 +135,7 @@ export default function BlogDetails() {
 
     try {
       setLikeLoading(true);
-      const response = await fetch(`${API_BASE_URL}/blog/${encodeURIComponent(slug)}/like`, {
+      const response = await fetch(`${API_BASE_URL}/blog/${encodeURIComponent(blog.id)}/like`, {
         method: "POST",
         headers: { Authorization: token },
       });
@@ -160,7 +160,10 @@ export default function BlogDetails() {
         <img src={cleanImageUrl(blog.coverImage)} alt={blog.title} className="mb-8 h-[280px] w-full rounded-3xl object-cover md:h-[440px]" />
 
         <div className="mb-8">
-          <span className="mb-4 inline-block rounded-full bg-indigo-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-indigo-700">{blog.status}</span>
+          <div className="mb-4 flex flex-wrap gap-2">
+            <span className="inline-block rounded-full bg-indigo-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-indigo-700">{blog.category?.name || "Uncategorized"}</span>
+            <span className="inline-block rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-600">{blog.status}</span>
+          </div>
           <h1 className="max-w-3xl text-4xl font-extrabold leading-tight tracking-tight md:text-6xl">{blog.title}</h1>
           <p className="mt-5 max-w-2xl text-lg leading-relaxed text-slate-600">{blog.excerpt}</p>
           <div className="mt-6 flex flex-wrap items-center gap-3 text-sm text-slate-500">

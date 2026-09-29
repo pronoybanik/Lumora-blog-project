@@ -71,7 +71,7 @@ const FeaturedStories = () => {
             key={story.id}
             className="bg-white rounded-2xl overflow-hidden border border-slate-100 hover:shadow-lg transition-shadow"
           >
-            <Link to={`/blog/${encodeURIComponent(story.slug)}`} className="block">
+            <Link to={`/blog/${encodeURIComponent(story.id)}`} className="block">
             <div className="relative h-44">
               <img
                 src={story.coverImage || fallbackImage}

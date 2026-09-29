@@ -399,7 +399,7 @@ export default function BlogsPage() {
       }
 
       const response = await fetch(
-        `${API_BASE_URL}/blog/${encodeURIComponent(blog.slug)}`,
+        `${API_BASE_URL}/blog/${encodeURIComponent(blog.id)}`,
         {
           method: "DELETE",
           headers: getAuthHeaders(),
@@ -458,7 +458,7 @@ export default function BlogsPage() {
       setDeleteError("");
 
       const response = await fetch(
-        `${API_BASE_URL}/blog/${encodeURIComponent(blog.slug)}`,
+        `${API_BASE_URL}/blog/${encodeURIComponent(blog.id)}`,
         {
           method: "PATCH",
           headers: getAuthHeaders(),
@@ -1074,7 +1074,7 @@ export default function BlogsPage() {
                 disabled={deleting || statusUpdating}
                 className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-40"
                 onClick={() => {
-                  navigate(`/editBlog/${encodeURIComponent(actionBlog.slug)}`);
+                    navigate(`/editBlog/${encodeURIComponent(actionBlog.id)}`);
                 }}
               >
                 <Pencil className="h-4 w-4" />
@@ -1088,7 +1088,7 @@ export default function BlogsPage() {
                 disabled={deleting || statusUpdating}
                 className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-40"
                 onClick={() => {
-                  navigate(`/blog/${encodeURIComponent(actionBlog.slug)}`);
+                    navigate(`/blog/${encodeURIComponent(actionBlog.id)}`);
                 }}
               >
                 <ExternalLink className="h-4 w-4" />

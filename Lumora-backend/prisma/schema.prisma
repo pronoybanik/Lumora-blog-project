@@ -5,7 +5,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  // url      = env("DB_URI")
+  url      = env("DB_URI")
 }
 
 // ==========================
@@ -137,6 +137,9 @@ model Blog {
 
   author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
 
+  categoryId String?
+  category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
   // Engagement
   comments Comment[]
   likes    Like[]
@@ -147,9 +150,25 @@ model Blog {
   updatedAt DateTime @updatedAt
 
   @@index([authorId])
+  @@index([categoryId])
   @@index([status])
   @@index([publishedAt])
   @@index([createdAt])
+}
+
+// ==========================
+// CATEGORY
+// ==========================
+
+model Category {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?  @db.Text
+
+  blogs     Blog[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // ==========================

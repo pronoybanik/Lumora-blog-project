@@ -12,6 +12,7 @@ import Dashboard from "../Page/admin/DashBoard.jsx";
 import BlogsPage from "../Page/admin/BlogsPage";
 import UserPage from "../Page/admin/UserPage";
 import ProfilePage from "../Page/ProfilePage.jsx";
+import CategoriesPage from "../Page/admin/CategoriesPage.jsx";
 
 const Routers = createBrowserRouter([
   {
@@ -31,7 +32,7 @@ const Routers = createBrowserRouter([
         element: <BlogList />,
       },
       {
-        path: "/blog/:slug",
+        path: "/blog/:id",
         element: <BlogDetails />,
       },
       {
@@ -39,7 +40,7 @@ const Routers = createBrowserRouter([
         element: <CreateBlogs />,
       },
       {
-        path: "/editBlog/:slug",
+        path: "/editBlog/:id",
         element: <CreateBlogs />,
       },
       {
@@ -73,6 +74,10 @@ const Routers = createBrowserRouter([
       {
         path: "/adminDashboard/BlogPage",
         element: <BlogsPage/>,
+      },
+      {
+        path: "/adminDashboard/categories",
+        element: <CategoriesPage />,
       },
     ],
   },

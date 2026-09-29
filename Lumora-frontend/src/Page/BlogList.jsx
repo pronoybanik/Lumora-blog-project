@@ -5,6 +5,7 @@ import {
   Bookmark,
   Heart,
   MessageCircle,
+  Search,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -15,7 +16,7 @@ const fallbackImages = [
   "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&h=600&fit=crop",
 ];
 const filters = ["All", "Design", "Tech", "Business"];
-const BLOG_LIST_CACHE_KEY = "lumora:blog-list:v1";
+const BLOG_LIST_CACHE_KEY = "lumora:blog-list:v2";
 const BLOG_LIST_CACHE_TTL = 60 * 1000;
 
 const readBlogListCache = () => {
@@ -173,16 +174,19 @@ export default function BlogList() {
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState("");
   const [authors, setAuthors] = React.useState([]);
+  const [searchInput, setSearchInput] = React.useState("");
+  const [searchQuery, setSearchQuery] = React.useState("");
 
   React.useEffect(() => {
     const loadBlogs = async () => {
+      setLoading(true);
       if (!API_BASE_URL) {
         setError("The API base URL is not configured.");
         setLoading(false);
         return;
       }
 
-      const cached = readBlogListCache();
+      const cached = searchQuery ? null : readBlogListCache();
       if (cached) {
         setBlogs(cached.blogs);
         setAuthors(cached.authors);
@@ -192,7 +196,7 @@ export default function BlogList() {
 
       try {
         const [blogsResponse, authorsResponse] = await Promise.all([
-          fetch(`${API_BASE_URL}/blog`),
+          fetch(`${API_BASE_URL}/blog${searchQuery ? `?search=${encodeURIComponent(searchQuery)}` : ""}`),
           fetch(`${API_BASE_URL}/user/authors`),
         ]);
         const result = await blogsResponse.json();
@@ -213,7 +217,7 @@ export default function BlogList() {
       }
     };
     loadBlogs();
-  }, []);
+  }, [searchQuery]);
 
   const visibleBlogs = blogs.filter((blog) =>
     activeFilter === "All" ? true : blog.status === activeFilter.toUpperCase(),
@@ -232,11 +236,16 @@ export default function BlogList() {
     );
   };
 
+  const submitSearch = (event) => {
+    event.preventDefault();
+    setSearchQuery(searchInput.trim());
+  };
+
   return (
     <div className="min-h-screen bg-[#f4f4fb] text-slate-900 font-sans">
       <main className="max-w-7xl mx-auto px-6">
         <section className="pt-10 pb-14">
-          <div className="flex items-end justify-between mb-4">
+          <div className="flex flex-col gap-5 mb-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <p className="text-xs font-semibold tracking-wide text-indigo-700 mb-1">
                 TOP STORIES
@@ -245,7 +254,20 @@ export default function BlogList() {
                 Trending Now
               </h1>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
+              <form onSubmit={submitSearch} className="flex items-center rounded-full border border-slate-200 bg-white px-3 py-2 shadow-sm sm:w-80">
+                <Search size={16} className="mr-2 shrink-0 text-slate-400" />
+                <input
+                  value={searchInput}
+                  onChange={(event) => setSearchInput(event.target.value)}
+                  placeholder="Search blogs, authors, topics..."
+                  aria-label="Search blogs"
+                  className="min-w-0 flex-1 bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400"
+                />
+                <button type="submit" className="ml-2 rounded-full bg-indigo-700 px-3 py-1 text-xs font-semibold text-white hover:bg-indigo-800">
+                  Search
+                </button>
+              </form>
               <button
                 aria-label="Previous stories"
                 className="w-9 h-9 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-600"
@@ -273,14 +295,14 @@ export default function BlogList() {
           )}
           {!loading && !error && visibleBlogs.length === 0 && (
             <div className="rounded-2xl bg-white p-12 text-center text-slate-500">
-              No blogs found.
+              {searchQuery ? `No blogs found for “${searchQuery}”.` : "No blogs found."}
             </div>
           )}
 
           {!loading && !error && featuredBlog && (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
               <Link
-                to={`/blog/${featuredBlog.slug}`}
+                to={`/blog/${featuredBlog.id}`}
                 className="lg:col-span-2 relative rounded-2xl overflow-hidden h-[480px] group"
               >
                 <img
@@ -292,9 +314,14 @@ export default function BlogList() {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-transparent" />
                 <div className="absolute top-5 left-5">
-                  <span className="bg-indigo-600 text-white text-xs font-semibold px-3 py-1.5 rounded-full">
-                    {featuredBlog.status}
-                  </span>
+                  <div className="flex flex-wrap gap-2">
+                    <span className="bg-indigo-600 text-white text-xs font-semibold px-3 py-1.5 rounded-full">
+                      {featuredBlog.category?.name || "Featured"}
+                    </span>
+                    <span className="bg-white/15 text-white text-xs font-semibold px-3 py-1.5 rounded-full backdrop-blur-sm">
+                      {featuredBlog.status}
+                    </span>
+                  </div>
                 </div>
                 <div className="absolute bottom-0 left-0 right-0 p-7">
                   <h2 className="text-white text-3xl font-bold leading-tight mb-4 max-w-xl">
@@ -318,13 +345,13 @@ export default function BlogList() {
               <div className="flex flex-col gap-6">
                 {sideBlogs.map((blog, index) => (
                   <Link
-                    to={`/blog/${blog.slug}`}
+                    to={`/blog/${blog.id}`}
                     key={blog.id}
                     className="flex-1 rounded-2xl bg-white border border-slate-100 p-6 flex flex-col justify-between hover:shadow-sm transition-shadow"
                   >
                     <div>
                       <span className="inline-block text-white text-[11px] font-semibold px-2.5 py-1 rounded-full mb-3 bg-orange-600">
-                        {blog.status}
+                        {blog.category?.name || blog.status}
                       </span>
                       <h3 className="text-lg font-bold leading-snug mb-3">
                         {blog.title}
@@ -395,7 +422,7 @@ export default function BlogList() {
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               {articleBlogs[0] && (
                 <Link
-                  to={`/blog/${articleBlogs[0].slug}`}
+                  to={`/blog/${articleBlogs[0].id}`}
                   className="group overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-sm transition-shadow hover:shadow-md md:row-span-2"
                 >
                   <div className="aspect-[1.55] overflow-hidden bg-slate-200">
@@ -441,7 +468,7 @@ export default function BlogList() {
 
               {articleBlogs[1] && (
                 <Link
-                  to={`/blog/${articleBlogs[1].slug}`}
+                  to={`/blog/${articleBlogs[1].id}`}
                   className="group flex min-h-[215px] flex-col justify-between rounded-xl border border-slate-200/80 bg-indigo-50/70 p-4 transition-colors hover:bg-indigo-50"
                 >
                   <div>
@@ -468,7 +495,7 @@ export default function BlogList() {
 
               {articleBlogs[2] && (
                 <Link
-                  to={`/blog/${articleBlogs[2].slug}`}
+                  to={`/blog/${articleBlogs[2].id}`}
                   className="group overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-sm transition-shadow hover:shadow-md"
                 >
                   <div className="aspect-[2.2] overflow-hidden bg-slate-200">

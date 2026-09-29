@@ -136,7 +136,7 @@ function PublicationCard({ blog, viewMode }) {
           : "bg-white rounded-xl shadow-sm border border-slate-100 p-4 flex flex-col sm:flex-row gap-4"
       }
     >
-      <Link to={`/blog/${encodeURIComponent(blog.slug)}`} className="block">
+      <Link to={`/blog/${encodeURIComponent(blog.id)}`} className="block">
       {/* Image */}
       <div
         className={
