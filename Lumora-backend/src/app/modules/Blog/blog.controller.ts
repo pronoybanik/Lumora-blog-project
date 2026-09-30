@@ -36,7 +36,7 @@ const getMyBlogs = catchAsync(async (req: Request, res: Response) => {
 
 const getBlogBySlug = catchAsync(async (req: Request, res: Response) => {
   const slug = req.params.slug as string;
-  const result = await blogServices.getBlogBySlug(slug);
+  const result = await blogServices.getBlogBySlug(slug, req.user?.id);
   sendResponse(res, {
     statusCode: StatusCodes.OK,
     success: true,
@@ -46,7 +46,7 @@ const getBlogBySlug = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getBlogById = catchAsync(async (req: Request, res: Response) => {
-  const result = await blogServices.getBlogById(String(req.params.id));
+  const result = await blogServices.getBlogById(String(req.params.id), req.user?.id);
   sendResponse(res, {
     statusCode: StatusCodes.OK,
     success: true,

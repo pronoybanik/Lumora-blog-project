@@ -35,6 +35,7 @@ export default function CreateBlogs() {
   const [coverImage, setCoverImage] = React.useState("");
 
   const [categoryId, setCategoryId] = React.useState("");
+  const [isPremium, setIsPremium] = React.useState(false);
 
   const [categories, setCategories] = React.useState([]);
 
@@ -90,6 +91,7 @@ export default function CreateBlogs() {
         setCoverImage(blog.coverImage || "");
         setImagePreview(blog.coverImage || "");
         setCategoryId(blog.categoryId || blog.category?.id || "");
+        setIsPremium(Boolean(blog.isPremium));
       } catch (error) {
         setMessage({ type: "error", text: error.message });
       }
@@ -245,6 +247,7 @@ export default function CreateBlogs() {
         content: content.trim(),
         coverImage,
         categoryId: categoryId || undefined,
+        isPremium,
       };
 
       const accessToken = localStorage.getItem("accessToken");
@@ -512,6 +515,11 @@ export default function CreateBlogs() {
                 Choose a category to help readers discover this blog.
               </p>
             </div>
+
+            <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-indigo-100 bg-indigo-50/60 p-3">
+              <input type="checkbox" checked={isPremium} onChange={(event) => setIsPremium(event.target.checked)} className="mt-0.5 accent-indigo-700" />
+              <span><span className="block text-sm font-semibold text-slate-800">Premium article</span><span className="mt-1 block text-[11px] leading-4 text-slate-500">Only active subscribers can read the full content.</span></span>
+            </label>
 
             <button
               type="button"

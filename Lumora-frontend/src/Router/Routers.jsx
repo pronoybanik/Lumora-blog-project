@@ -13,6 +13,9 @@ import BlogsPage from "../Page/admin/BlogsPage";
 import UserPage from "../Page/admin/UserPage";
 import ProfilePage from "../Page/ProfilePage.jsx";
 import CategoriesPage from "../Page/admin/CategoriesPage.jsx";
+import PaymentResult from "../Page/PaymentResult.jsx";
+import PaymentFailed from "../Page/PaymentFailed.jsx";
+import PaymentCancelled from "../Page/PaymentCancelled.jsx";
 
 const Routers = createBrowserRouter([
   {
@@ -57,6 +60,9 @@ const Routers = createBrowserRouter([
     path: "/login",
     element: <Login />,
   },
+  { path: "/payment-success", element: <PaymentResult /> },
+  { path: "/failed", element: <PaymentFailed /> },
+  { path: "/cancel", element: <PaymentCancelled /> },
 
   {
     path: "/adminDashboard",
