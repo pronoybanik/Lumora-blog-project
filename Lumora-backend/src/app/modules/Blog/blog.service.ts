@@ -16,6 +16,31 @@ type BlogPayload = {
   coverImage?: string;
   status?: BlogStatus;
   categoryId?: string;
+  isPremium?: boolean;
+};
+
+const hasActiveSubscription = async (userId?: string) => {
+  if (!userId) return false;
+  const subscription = await prisma.subscription.findFirst({
+    where: { userId, status: "ACTIVE", expiresAt: { gt: new Date() } },
+    select: { id: true },
+  });
+  return Boolean(subscription);
+};
+
+const protectPremiumContent = async <T extends { isPremium: boolean; content: string }>(
+  blog: T,
+  userId?: string,
+) => {
+  if (!blog.isPremium || (await hasActiveSubscription(userId))) {
+    return { ...blog, hasAccess: true };
+  }
+
+  return {
+    ...blog,
+    content: "",
+    hasAccess: false,
+  };
 };
 
 const makeSlug = (title: string) =>
@@ -67,6 +92,7 @@ const createBlog = async (payload: BlogPayload, user: AuthenticatedUser) => {
       publishedAt: payload.status === BlogStatus.PUBLISHED ? new Date() : null,
       authorId: author.id,
       categoryId: payload.categoryId || null,
+      isPremium: payload.isPremium ?? false,
     },
     include: {
       author: { select: { id: true, name: true, email: true } },
@@ -76,7 +102,7 @@ const createBlog = async (payload: BlogPayload, user: AuthenticatedUser) => {
 };
 
 const getBlogs = async (search?: string) =>
-  prisma.blog.findMany({
+  (await prisma.blog.findMany({
     where: search?.trim()
       ? {
           OR: [
@@ -94,7 +120,7 @@ const getBlogs = async (search?: string) =>
       category: true,
       _count: { select: { comments: true, likes: true } },
     },
-  });
+  })).map(({ content: _content, ...blog }) => ({ ...blog, hasAccess: !blog.isPremium }));
 
 const getMyBlogs = async (user: AuthenticatedUser) =>
   prisma.blog.findMany({
@@ -107,13 +133,13 @@ const getMyBlogs = async (user: AuthenticatedUser) =>
     },
   });
 
-const getBlogBySlug = async (slug: string) => {
+const getBlogBySlug = async (slug: string, userId?: string) => {
   await prisma.blog.update({
     where: { slug },
     data: { viewCount: { increment: 1 } },
   });
 
-  return prisma.blog.findUniqueOrThrow({
+  const blog = await prisma.blog.findUniqueOrThrow({
     where: { slug },
     include: {
       author: { select: { id: true, name: true } },
@@ -132,15 +158,16 @@ const getBlogBySlug = async (slug: string) => {
       _count: { select: { comments: true, likes: true } },
     },
   });
+  return protectPremiumContent(blog, userId);
 };
 
-const getBlogById = async (id: string) => {
+const getBlogById = async (id: string, userId?: string) => {
   await prisma.blog.update({
     where: { id },
     data: { viewCount: { increment: 1 } },
   });
 
-  return prisma.blog.findUniqueOrThrow({
+  const blog = await prisma.blog.findUniqueOrThrow({
     where: { id },
     include: {
       author: { select: { id: true, name: true } },
@@ -159,6 +186,7 @@ const getBlogById = async (id: string) => {
       _count: { select: { comments: true, likes: true } },
     },
   });
+  return protectPremiumContent(blog, userId);
 };
 
 const createComment = async (
@@ -312,6 +340,7 @@ const updateBlog = async (
         ? { categoryId: payload.categoryId || null }
         : {}),
       ...(payload.status !== undefined ? { status: payload.status } : {}),
+      ...(payload.isPremium !== undefined ? { isPremium: payload.isPremium } : {}),
       ...(titleChanged
         ? { slug: await getUniqueSlug(payload.title!, blog.id) }
         : {}),

@@ -1,6 +1,7 @@
 import express from "express";
 import auth from "../../middlewares/auth";
 import { blogController } from "./blog.controller";
+import optionalAuth from "../../middlewares/optionalAuth";
 
 const router = express.Router();
 
@@ -11,7 +12,7 @@ router.post("/:id/like", auth(), blogController.toggleLikeById);
 router.post("/:id/comments", auth(), blogController.createCommentById);
 router.patch("/:id", auth(), blogController.updateBlogById);
 router.delete("/:id", auth(), blogController.deleteBlogById);
-router.get("/:id", blogController.getBlogById);
+router.get("/:id", optionalAuth, blogController.getBlogById);
 router.post("/", auth(), blogController.createBlog);
 
 export const BlogRouter = router;
