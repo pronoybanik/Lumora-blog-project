@@ -1,5 +1,5 @@
 import React from "react";
-import { ArrowLeft, Eye, Heart, MessageCircle } from "lucide-react";
+import { ArrowLeft, Eye, Heart, MessageCircle, LockKeyhole } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -25,7 +25,7 @@ const cleanImageUrl = (value) => {
 };
 
 export default function BlogDetails() {
-  const { slug } = useParams();
+  const { id } = useParams();
   const [blog, setBlog] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState("");
@@ -40,14 +40,17 @@ export default function BlogDetails() {
 
   React.useEffect(() => {
     const loadBlog = async () => {
-      if (!API_BASE_URL || !slug) {
+      if (!API_BASE_URL || !id) {
         setError("The blog could not be loaded.");
         setLoading(false);
         return;
       }
 
       try {
-        const response = await fetch(`${API_BASE_URL}/blog/${encodeURIComponent(slug)}`);
+        const token = localStorage.getItem("accessToken");
+        const response = await fetch(`${API_BASE_URL}/blog/${encodeURIComponent(id)}`, {
+          headers: token ? { Authorization: token } : {},
+        });
         const result = await response.json();
         if (!response.ok || !result.success) {
           throw new Error(result.message || "Failed to load this blog.");
@@ -56,9 +59,8 @@ export default function BlogDetails() {
         setComments(result.data.comments || []);
         setLikes(result.data._count?.likes ?? 0);
 
-        const token = localStorage.getItem("accessToken");
         if (token) {
-          const likeResponse = await fetch(`${API_BASE_URL}/blog/${encodeURIComponent(slug)}/like`, {
+          const likeResponse = await fetch(`${API_BASE_URL}/blog/${encodeURIComponent(result.data.id)}/like`, {
             headers: { Authorization: token },
           });
           const likeResult = await likeResponse.json();
@@ -72,7 +74,7 @@ export default function BlogDetails() {
     };
 
     loadBlog();
-  }, [slug]);
+  }, [id]);
 
   if (loading) {
     return <main className="min-h-screen bg-[#f4f4fb] px-6 py-20 text-center text-slate-500">Loading article...</main>;
@@ -101,7 +103,7 @@ export default function BlogDetails() {
 
     try {
       setCommentLoading(true);
-      const response = await fetch(`${API_BASE_URL}/blog/${encodeURIComponent(slug)}/comments`, {
+      const response = await fetch(`${API_BASE_URL}/blog/${encodeURIComponent(blog.id)}/comments`, {
         method: "POST",
         headers: { Authorization: token, "Content-Type": "application/json" },
         body: JSON.stringify({ content, parentId }),
@@ -135,7 +137,7 @@ export default function BlogDetails() {
 
     try {
       setLikeLoading(true);
-      const response = await fetch(`${API_BASE_URL}/blog/${encodeURIComponent(slug)}/like`, {
+      const response = await fetch(`${API_BASE_URL}/blog/${encodeURIComponent(blog.id)}/like`, {
         method: "POST",
         headers: { Authorization: token },
       });
@@ -160,7 +162,10 @@ export default function BlogDetails() {
         <img src={cleanImageUrl(blog.coverImage)} alt={blog.title} className="mb-8 h-[280px] w-full rounded-3xl object-cover md:h-[440px]" />
 
         <div className="mb-8">
-          <span className="mb-4 inline-block rounded-full bg-indigo-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-indigo-700">{blog.status}</span>
+          <div className="mb-4 flex flex-wrap gap-2">
+            <span className="inline-block rounded-full bg-indigo-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-indigo-700">{blog.category?.name || "Uncategorized"}</span>
+            <span className="inline-block rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-600">{blog.status}</span>
+          </div>
           <h1 className="max-w-3xl text-4xl font-extrabold leading-tight tracking-tight md:text-6xl">{blog.title}</h1>
           <p className="mt-5 max-w-2xl text-lg leading-relaxed text-slate-600">{blog.excerpt}</p>
           <div className="mt-6 flex flex-wrap items-center gap-3 text-sm text-slate-500">
@@ -168,7 +173,7 @@ export default function BlogDetails() {
             <span>•</span>
             <span>{formatDate(blog.publishedAt || blog.createdAt)}</span>
             <span>•</span>
-            <span>{getReadTime(blog.content)}</span>
+            <span>{getReadTime(blog.content || blog.excerpt)}</span>
             <span className="inline-flex items-center gap-1"><Eye size={15} /> {blog.viewCount ?? 0}</span>
             <span className="inline-flex items-center gap-1"><MessageCircle size={15} /> {comments.length || commentCount}</span>
             <button type="button" onClick={handleLike} disabled={likeLoading} className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 font-medium ${liked ? "bg-rose-100 text-rose-700" : "bg-white text-slate-600"} disabled:opacity-50`}>
@@ -178,7 +183,18 @@ export default function BlogDetails() {
         </div>
         
 
-        <div className="whitespace-pre-wrap border-t border-slate-200 pt-8 text-lg leading-8 text-slate-700">{blog.content}</div>
+        {blog.hasAccess ? (
+          <div className="whitespace-pre-wrap border-t border-slate-200 pt-8 text-lg leading-8 text-slate-700">{blog.content}</div>
+        ) : (
+          <div className="border-t border-slate-200 pt-8">
+            <div className="rounded-3xl border border-indigo-100 bg-indigo-50 p-8 text-center">
+              <LockKeyhole className="mx-auto mb-4 text-indigo-700" size={30} />
+              <h2 className="text-2xl font-bold text-slate-900">This is a premium article</h2>
+              <p className="mx-auto mt-2 max-w-lg text-slate-600">You can read the preview above. Start a Lumora Premium subscription to unlock the full story.</p>
+              <Link to="/pricing" className="mt-5 inline-flex rounded-xl bg-indigo-700 px-5 py-3 text-sm font-semibold text-white hover:bg-indigo-800">Unlock full article</Link>
+            </div>
+          </div>
+        )}
 
         <section className="mt-14 border-t border-slate-200 pt-8">
           <h2 className="text-2xl font-bold">Comments ({commentCount})</h2>

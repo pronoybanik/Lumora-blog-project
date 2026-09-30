@@ -41,7 +41,23 @@ const getMyProfile = async (user: { id: string }) => {
     },
   });
 
-  return userInfo;
+  const subscription = await prisma.subscription.findFirst({
+    where: {
+      userId: user.id,
+      status: "ACTIVE",
+      expiresAt: { gt: new Date() },
+    },
+    orderBy: { expiresAt: "desc" },
+    select: {
+      id: true,
+      plan: true,
+      status: true,
+      startsAt: true,
+      expiresAt: true,
+    },
+  });
+
+  return { ...userInfo, subscription };
 };
 
 const updateMyProfile = async (

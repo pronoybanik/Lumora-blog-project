@@ -22,9 +22,9 @@ const CLOUDINARY_UPLOAD_PRESET =
   import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "Lumora";
 
 export default function CreateBlogs() {
-  const { slug } = useParams();
+  const { id } = useParams();
   const navigate = useNavigate();
-  const isEditing = Boolean(slug);
+  const isEditing = Boolean(id);
 
   const [title, setTitle] = React.useState("");
 
@@ -33,6 +33,11 @@ export default function CreateBlogs() {
   const [content, setContent] = React.useState("");
 
   const [coverImage, setCoverImage] = React.useState("");
+
+  const [categoryId, setCategoryId] = React.useState("");
+  const [isPremium, setIsPremium] = React.useState(false);
+
+  const [categories, setCategories] = React.useState([]);
 
   const [imagePreview, setImagePreview] = React.useState("");
 
@@ -47,6 +52,22 @@ export default function CreateBlogs() {
   const fileInputRef = React.useRef(null);
 
   React.useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/category`);
+        const result = await response.json();
+        if (response.ok && result.success) {
+          setCategories(Array.isArray(result.data) ? result.data : []);
+        }
+      } catch {
+        // Category selection is optional for legacy/uncategorized posts.
+      }
+    };
+
+    loadCategories();
+  }, []);
+
+  React.useEffect(() => {
     if (!isEditing) {
       setTitle("The architecture of silence.");
       return;
@@ -55,7 +76,7 @@ export default function CreateBlogs() {
     const loadBlog = async () => {
       try {
         const response = await fetch(
-          `${API_BASE_URL}/blog/${encodeURIComponent(slug)}`,
+          `${API_BASE_URL}/blog/${encodeURIComponent(id)}`,
         );
         const result = await response.json();
 
@@ -69,13 +90,15 @@ export default function CreateBlogs() {
         setContent(blog.content || "");
         setCoverImage(blog.coverImage || "");
         setImagePreview(blog.coverImage || "");
+        setCategoryId(blog.categoryId || blog.category?.id || "");
+        setIsPremium(Boolean(blog.isPremium));
       } catch (error) {
         setMessage({ type: "error", text: error.message });
       }
     };
 
     loadBlog();
-  }, [isEditing, slug]);
+  }, [isEditing, id]);
 
   const handleTitleChange = (e) => {
     const value = e.target.value;
@@ -223,13 +246,15 @@ export default function CreateBlogs() {
         excerpt: subtitle.trim() || undefined,
         content: content.trim(),
         coverImage,
+        categoryId: categoryId || undefined,
+        isPremium,
       };
 
       const accessToken = localStorage.getItem("accessToken");
 
       const response = await fetch(
         isEditing
-          ? `${API_BASE_URL}/blog/${encodeURIComponent(slug)}`
+          ? `${API_BASE_URL}/blog/${encodeURIComponent(id)}`
           : `${API_BASE_URL}/blog`,
         {
         method: isEditing ? "PATCH" : "POST",
@@ -468,6 +493,33 @@ export default function CreateBlogs() {
                 </div>
               )}
             </div>
+
+            <div>
+              <label htmlFor="blog-category" className="mb-2 block text-xs font-semibold text-slate-500">
+                Category
+              </label>
+              <select
+                id="blog-category"
+                value={categoryId}
+                onChange={(event) => setCategoryId(event.target.value)}
+                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+              >
+                <option value="">Uncategorized</option>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1.5 text-[11px] text-slate-400">
+                Choose a category to help readers discover this blog.
+              </p>
+            </div>
+
+            <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-indigo-100 bg-indigo-50/60 p-3">
+              <input type="checkbox" checked={isPremium} onChange={(event) => setIsPremium(event.target.checked)} className="mt-0.5 accent-indigo-700" />
+              <span><span className="block text-sm font-semibold text-slate-800">Premium article</span><span className="mt-1 block text-[11px] leading-4 text-slate-500">Only active subscribers can read the full content.</span></span>
+            </label>
 
             <button
               type="button"

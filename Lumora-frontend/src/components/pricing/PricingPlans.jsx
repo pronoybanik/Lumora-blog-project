@@ -23,6 +23,7 @@ const plans = [
     ],
     cta: 'Upgrade Now',
     featured: true,
+    paid: true,
   },
   {
     name: 'Business',
@@ -43,6 +44,29 @@ const plans = [
 function PlanCard({ plan, yearly }) {
   const price = yearly ? plan.yearly : plan.monthly
   const period = yearly ? '/yr' : '/mo'
+
+  const startCheckout = async () => {
+    if (!plan.paid) {
+      window.location.href = '/blogList'
+      return
+    }
+    const token = localStorage.getItem('accessToken')
+    if (!token) {
+      window.location.href = '/login'
+      return
+    }
+    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/ssl/initiate`, {
+      method: 'POST',
+      headers: { Authorization: token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ plan: yearly ? 'yearly' : 'monthly' }),
+    })
+    const result = await response.json()
+    if (!response.ok || !result.success) {
+      window.alert(result.message || 'Unable to start checkout.')
+      return
+    }
+    window.location.href = result.data.gatewayUrl
+  }
 
   if (plan.featured) {
     return (
@@ -68,7 +92,7 @@ function PlanCard({ plan, yearly }) {
             ))}
           </ul>
         </div>
-        <button className="w-full py-3 rounded-xl bg-white text-[#3525cd] text-sm font-medium active:scale-95 transition-transform">
+        <button onClick={startCheckout} className="w-full py-3 rounded-xl bg-white text-[#3525cd] text-sm font-medium active:scale-95 transition-transform">
           {plan.cta}
         </button>
       </div>
@@ -95,7 +119,7 @@ function PlanCard({ plan, yearly }) {
           ))}
         </ul>
       </div>
-      <button className="w-full py-3 rounded-xl bg-[#e9edff] text-[#141b2b] text-sm font-medium active:scale-95 transition-transform">
+      <button onClick={startCheckout} className="w-full py-3 rounded-xl bg-[#e9edff] text-[#141b2b] text-sm font-medium active:scale-95 transition-transform">
         {plan.cta}
       </button>
     </div>

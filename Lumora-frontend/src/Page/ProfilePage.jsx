@@ -136,7 +136,7 @@ function PublicationCard({ blog, viewMode }) {
           : "bg-white rounded-xl shadow-sm border border-slate-100 p-4 flex flex-col sm:flex-row gap-4"
       }
     >
-      <Link to={`/blog/${encodeURIComponent(blog.slug)}`} className="block">
+      <Link to={`/blog/${encodeURIComponent(blog.id)}`} className="block">
       {/* Image */}
       <div
         className={
@@ -1047,6 +1047,24 @@ export default function ProfilePage() {
                   </div>
                 )}
               </div>
+            </div>
+
+            <div className={`rounded-xl border p-5 ${user?.subscription ? "border-indigo-200 bg-indigo-50" : "border-slate-100 bg-white"}`}>
+              <h3 className="text-xs font-semibold tracking-wide text-slate-500 mb-3">PREMIUM ACCESS</h3>
+              {user?.subscription ? (
+                <>
+                  <p className="text-lg font-semibold text-indigo-800">Active subscription</p>
+                  <p className="mt-1 text-sm capitalize text-slate-600">{user.subscription.plan} plan</p>
+                  <p className="mt-2 text-xs text-slate-500">Valid until {formatDate(user.subscription.expiresAt)}</p>
+                  <Link to="/blogList" className="mt-4 inline-flex text-sm font-semibold text-indigo-700 hover:text-indigo-900">Read premium blogs →</Link>
+                </>
+              ) : (
+                <>
+                  <p className="text-lg font-semibold text-slate-800">Free account</p>
+                  <p className="mt-1 text-sm text-slate-500">Premium articles are locked.</p>
+                  <Link to="/pricing" className="mt-4 inline-flex text-sm font-semibold text-indigo-700 hover:text-indigo-900">Upgrade to Premium →</Link>
+                </>
+              )}
             </div>
 
             <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-5">
