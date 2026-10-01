@@ -1,41 +1,38 @@
-import React from "react";
+import { useEffect, useState } from "react";
 import {
   Eye,
   Heart,
   Users,
-  Plus,
   MoreVertical,
-  Award,
   Lightbulb,
+  Loader2,
+  CreditCard,
 } from "lucide-react";
-import AdminNavbar from "./AdminNavbar";
 
-const recentBlogs = [
-  {
-    title: "The Future of Design Systems",
-    status: "Published",
-    meta: "2 days ago",
-    views: "45k",
-    visibility: "Public",
-    thumbColor: "bg-gradient-to-br from-rose-200 via-amber-100 to-indigo-200",
-  },
-  {
-    title: "Understanding CSS Grid Layouts",
-    status: "Draft",
-    meta: "Last edited 4 hours ago",
-    views: null,
-    visibility: "Private",
-    thumbColor: "bg-slate-200",
-  },
-  {
-    title: "Mastering Typography in Web",
-    status: "Published",
-    meta: "1 week ago",
-    views: "12k",
-    visibility: "Public",
-    thumbColor: "bg-slate-300",
-  },
-];
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+const getAuthHeaders = () => {
+  const token = localStorage.getItem("accessToken") || localStorage.getItem("token");
+
+  return token
+    ? { Authorization: token, "Content-Type": "application/json" }
+    : { "Content-Type": "application/json" };
+};
+
+const formatNumber = (value) =>
+  new Intl.NumberFormat("en-US", {
+    notation: "compact",
+    maximumFractionDigits: 1,
+  }).format(Number(value || 0));
+
+const formatMoney = (value, currency = "BDT") =>
+  `${currency} ${Number(value || 0).toLocaleString("en-BD", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+
+const formatDate = (date) =>
+  new Intl.DateTimeFormat("en-US", { dateStyle: "medium" }).format(new Date(date));
 
 function StatCard({ label, value, delta, icon: Icon, children }) {
   return (
@@ -58,6 +55,45 @@ function StatCard({ label, value, delta, icon: Icon, children }) {
 }
 
 export default function Dashboard() {
+  const [dashboard, setDashboard] = useState(null);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const loadDashboard = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/user/dashboard`, {
+          headers: getAuthHeaders(),
+        });
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+          throw new Error(result.message || "Unable to load dashboard data");
+        }
+
+        setDashboard(result.data);
+      } catch (dashboardError) {
+        setError(dashboardError.message);
+      }
+    };
+
+    loadDashboard();
+  }, []);
+
+  if (error) {
+    return <div className="px-10 py-10 text-sm text-red-600">{error}</div>;
+  }
+
+  if (!dashboard) {
+    return (
+      <div className="flex min-h-[50vh] items-center justify-center text-slate-500">
+        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+        Loading dashboard...
+      </div>
+    );
+  }
+
+  const { stats, recentBlogs, paymentHistory } = dashboard;
+
   return (
     
       <div className="px-10 py-10 max-w-6xl">
@@ -71,15 +107,11 @@ export default function Dashboard() {
               Welcome back. Here&apos;s your creative performance at a glance.
             </p>
           </div>
-          <button className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-indigo-700 hover:bg-indigo-800 text-white text-sm font-medium shrink-0">
-            <Plus className="w-4 h-4" strokeWidth={2.5} />
-            Create New
-          </button>
         </div>
 
         {/* Stat cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-8">
-          <StatCard label="Total Views" value="124.5k" delta="↑ 12%" icon={Eye}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5 mb-8">
+          <StatCard label="Total Views" value={formatNumber(stats.totalViews)} icon={Eye}>
             <svg className="w-full h-14" viewBox="0 0 240 56" fill="none">
               <polyline
                 points="0,40 24,32 48,44 72,26 96,36 120,18 144,30 168,10 192,24 216,14 240,20"
@@ -97,7 +129,7 @@ export default function Dashboard() {
             </svg>
           </StatCard>
 
-          <StatCard label="Total Likes" value="42.8k" delta="↑ 8%" icon={Heart}>
+          <StatCard label="Total Likes" value={formatNumber(stats.totalLikes)} icon={Heart}>
             <svg className="w-full h-14" viewBox="0 0 240 56" fill="none">
               <polyline
                 points="0,44 30,40 60,36 90,34 120,20 150,26 180,10 210,14 240,10"
@@ -115,17 +147,21 @@ export default function Dashboard() {
             </svg>
           </StatCard>
 
-          <StatCard label="New Followers" value="1,204" delta={null} icon={Users}>
+          <StatCard label="Total Followers" value={formatNumber(stats.totalFollowers)} icon={Users}>
             <div className="flex items-end gap-2 h-14">
-              {[16, 26, 12, 30, 18, 38, 30].map((h, i) => (
+              {[16, 26, 12, 30, 18, 38, 30].map((h, index) => (
                 <div
-                  key={i}
+                  key={index}
                   className="w-4 rounded-sm bg-indigo-700"
                   style={{ height: `${h}px` }}
                 />
               ))}
             </div>
-            <p className="text-xs text-slate-400 mt-2">This week</p>
+            <p className="text-xs text-slate-400 mt-2">{formatNumber(stats.totalBlogs)} total blogs</p>
+          </StatCard>
+
+          <StatCard label="Total Paid (TK)" value={formatMoney(stats.totalPaid)} icon={CreditCard}>
+            <p className="text-xs text-slate-400 mt-2">{formatNumber(stats.paidPayments)} successful payments</p>
           </StatCard>
         </div>
 
@@ -146,27 +182,28 @@ export default function Dashboard() {
                   key={blog.title}
                   className="flex items-center gap-4 py-3.5 border-b border-slate-50 last:border-0"
                 >
-                  <div className={`w-12 h-12 rounded-lg shrink-0 ${blog.thumbColor}`} />
+                  <div
+                    className="w-12 h-12 rounded-lg shrink-0 bg-slate-200 bg-cover bg-center"
+                    style={blog.coverImage ? { backgroundImage: `url(${blog.coverImage})` } : undefined}
+                  />
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-slate-900 truncate">{blog.title}</p>
                     <p className="text-xs text-slate-400 mt-0.5">
-                      {blog.status} • {blog.meta}
+                      {blog.status} • {formatDate(blog.createdAt)}
                     </p>
                   </div>
-                  {blog.views && (
-                    <span className="flex items-center gap-1 text-xs text-slate-400 shrink-0">
-                      <Eye className="w-3.5 h-3.5" strokeWidth={2} />
-                      {blog.views}
-                    </span>
-                  )}
+                  <span className="flex items-center gap-1 text-xs text-slate-400 shrink-0">
+                    <Eye className="w-3.5 h-3.5" strokeWidth={2} />
+                    {formatNumber(blog.viewCount)}
+                  </span>
                   <span
                     className={`text-xs font-medium px-3 py-1 rounded-full shrink-0 ${
-                      blog.visibility === "Public"
+                      blog.status === "PUBLISHED"
                         ? "bg-indigo-50 text-indigo-700"
                         : "bg-slate-100 text-slate-600"
                     }`}
                   >
-                    {blog.visibility}
+                    {blog.status === "PUBLISHED" ? "Public" : "Private"}
                   </span>
                   <button className="text-slate-400 hover:text-slate-600 shrink-0">
                     <MoreVertical className="w-4 h-4" strokeWidth={2} />
@@ -178,30 +215,23 @@ export default function Dashboard() {
 
           {/* Right sidebar cards */}
           <div className="space-y-5">
-            {/* Pro plan card */}
             <div className="bg-indigo-700 rounded-xl p-6 text-white">
-              <div className="flex items-center gap-2 mb-4 text-indigo-200 text-xs font-semibold tracking-wide">
-                <Award className="w-4 h-4" strokeWidth={2} />
-                PRO PLAN ACTIVE
-              </div>
+              <p className="text-xs font-semibold tracking-wide text-indigo-200 mb-4">CONTENT OVERVIEW</p>
               <h3 className="text-2xl font-bold mb-2 leading-snug">
-                Unlock your full potential
+                {formatNumber(stats.totalBlogs)} total blogs
               </h3>
               <p className="text-sm text-indigo-100 leading-relaxed mb-6">
-                You have access to advanced analytics, priority support, and custom domains.
+                Keep an eye on your publication progress and audience activity.
               </p>
 
               <div className="flex items-center justify-between text-xs text-indigo-200 mb-2">
-                <span>Storage Used</span>
-                <span className="text-white font-medium">45GB / 100GB</span>
+                <span>Published</span>
+                <span className="text-white font-medium">{formatNumber(stats.publishedBlogs)}</span>
               </div>
-              <div className="w-full h-1.5 bg-indigo-500/40 rounded-full overflow-hidden mb-6">
-                <div className="h-full bg-white rounded-full" style={{ width: "45%" }} />
+              <div className="flex items-center justify-between text-xs text-indigo-200 mb-6">
+                <span>Drafts</span>
+                <span className="text-white font-medium">{formatNumber(stats.draftBlogs)}</span>
               </div>
-
-              <button className="w-full py-2.5 rounded-lg bg-white text-indigo-700 text-sm font-semibold hover:bg-indigo-50">
-                Manage Subscription
-              </button>
             </div>
 
             {/* Pro tip card */}
@@ -215,6 +245,59 @@ export default function Dashboard() {
               </p>
             </div>
           </div>
+        </div>
+
+        <div className="mt-6 bg-white rounded-xl border border-slate-100 shadow-sm p-6">
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-lg font-semibold text-slate-900">Payment History</h2>
+            <span className="text-sm text-slate-400">Latest transactions</span>
+          </div>
+
+          {paymentHistory.length === 0 ? (
+            <p className="py-6 text-sm text-slate-400">No payment history yet.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[620px] text-left text-sm">
+                <thead className="border-b border-slate-100 text-xs uppercase tracking-wide text-slate-400">
+                  <tr>
+                    <th className="pb-3 font-medium">Customer</th>
+                    <th className="pb-3 font-medium">Plan</th>
+                    <th className="pb-3 font-medium">Transaction</th>
+                    <th className="pb-3 font-medium">Date</th>
+                    <th className="pb-3 text-right font-medium">Amount</th>
+                    <th className="pb-3 text-right font-medium">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paymentHistory.map((payment) => (
+                    <tr key={payment.id} className="border-b border-slate-50 last:border-0">
+                      <td className="py-3">
+                        <p className="font-medium text-slate-800">{payment.user.name}</p>
+                        <p className="text-xs text-slate-400">{payment.user.email}</p>
+                      </td>
+                      <td className="py-3 capitalize text-slate-600">{payment.plan}</td>
+                      <td className="py-3 font-mono text-xs text-slate-500">{payment.transactionId}</td>
+                      <td className="py-3 text-slate-500">{formatDate(payment.createdAt)}</td>
+                      <td className="py-3 text-right font-medium text-slate-800">
+                        {formatMoney(payment.amount, payment.currency)}
+                      </td>
+                      <td className="py-3 text-right">
+                        <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                          payment.status === "PAID"
+                            ? "bg-emerald-50 text-emerald-700"
+                            : payment.status === "INITIATED"
+                              ? "bg-amber-50 text-amber-700"
+                              : "bg-red-50 text-red-700"
+                        }`}>
+                          {payment.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
  

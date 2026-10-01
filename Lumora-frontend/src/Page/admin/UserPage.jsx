@@ -467,13 +467,15 @@ export default function UsersPage() {
                         <Pencil className="h-4 w-4" />
                       </button>
 
-                      <button
-                        onClick={() => handleDelete(user)}
-                        className="rounded-md p-1.5 hover:bg-rose-50 hover:text-rose-500"
-                        title="Delete user"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
+                      {user.role !== "ADMIN" && (
+                        <button
+                          onClick={() => handleDelete(user)}
+                          className="rounded-md p-1.5 hover:bg-rose-50 hover:text-rose-500"
+                          title="Delete user"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>

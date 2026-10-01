@@ -28,6 +28,12 @@ router.get(
     userController.getALlUser
 );
 
+router.get(
+    '/dashboard',
+    auth("ADMIN"),
+    userController.getDashboard
+);
+
 router.post('/author/apply', auth(), userController.applyForAuthor);
 router.get('/author/applications', auth("ADMIN"), userController.getAuthorApplications);
 router.patch('/author/:id/review', auth("ADMIN"), userController.reviewAuthorApplication);

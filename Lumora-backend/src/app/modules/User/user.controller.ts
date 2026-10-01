@@ -41,6 +41,17 @@ const getALlUser = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getDashboard = catchAsync(async (_req: Request, res: Response) => {
+  const result = await userServices.getDashboard();
+
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: "Dashboard data fetched successfully!",
+    data: result,
+  });
+});
+
 const getAuthors = catchAsync(async (_req: Request, res: Response) => {
   const result = await userServices.getAuthors();
 
@@ -124,6 +135,7 @@ export const userController = {
   getMyProfile,
   updateMyProfile,
   getALlUser,
+  getDashboard,
   getAuthors,
   getVerifiedAuthors,
   toggleFollow,

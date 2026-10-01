@@ -102,6 +102,68 @@ const getALlUser = async () => {
   return result;
 };
 
+const getDashboard = async () => {
+  const [blogStats, totalLikes, totalFollowers, publishedBlogs, draftBlogs, recentBlogs, paidPayments, paymentHistory] = await Promise.all([
+    prisma.blog.aggregate({
+      _sum: { viewCount: true },
+      _count: { _all: true },
+    }),
+    prisma.like.count(),
+    prisma.follow.count(),
+    prisma.blog.count({ where: { status: "PUBLISHED" } }),
+    prisma.blog.count({ where: { status: "DRAFT" } }),
+    prisma.blog.findMany({
+      take: 5,
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        title: true,
+        status: true,
+        coverImage: true,
+        viewCount: true,
+        createdAt: true,
+      },
+    }),
+    prisma.payment.aggregate({
+      where: { status: "PAID" },
+      _sum: { amount: true },
+      _count: { _all: true },
+    }),
+    prisma.payment.findMany({
+      take: 8,
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        transactionId: true,
+        plan: true,
+        amount: true,
+        currency: true,
+        status: true,
+        createdAt: true,
+        user: { select: { name: true, email: true } },
+      },
+    }),
+  ]);
+
+  return {
+    stats: {
+      totalViews: blogStats._sum.viewCount ?? 0,
+      totalBlogs: blogStats._count._all,
+      totalLikes,
+      totalFollowers,
+      publishedBlogs,
+      draftBlogs,
+      totalPaid: Number(paidPayments._sum.amount ?? 0),
+      paidPayments: paidPayments._count._all,
+    },
+    recentBlogs,
+    paymentHistory: paymentHistory.map((payment) => ({
+      ...payment,
+      amount: Number(payment.amount),
+    })),
+  };
+};
+
 const applyForAuthor = async (userId: string) => {
   const user = await prisma.user.findUniqueOrThrow({
     where: { id: userId },
@@ -223,6 +285,15 @@ const getFollowStatus = async (followingId: string, followerId: string) => {
 };
 
 const deleteUser = async (userId: string) => {
+  const user = await prisma.user.findUniqueOrThrow({
+    where: { id: userId },
+    select: { role: true },
+  });
+
+  if (user.role === "ADMIN") {
+    throw new ApiError(StatusCodes.FORBIDDEN, "Admin users cannot be deleted");
+  }
+
   return prisma.user.delete({
     where: {
       id: userId,
@@ -234,6 +305,7 @@ export const userServices = {
   getMyProfile,
   updateMyProfile,
   getALlUser,
+  getDashboard,
   getAuthors,
   getVerifiedAuthors,
   toggleFollow,
