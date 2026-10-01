@@ -19,4 +19,7 @@ Frondend: https://lumora-blog-project.vercel.app
 backend: https://lumora-blog-project-backennd.onrender.com/api/v1
 
 admin@gmail.com
-admin123
+11223344
+
+pronoybanik82@gmail.com
+11223344
