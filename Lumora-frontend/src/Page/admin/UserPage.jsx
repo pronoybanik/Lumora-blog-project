@@ -225,9 +225,7 @@ export default function UsersPage() {
         !search ||
         user?.name?.toLowerCase().includes(search) ||
         user?.email?.toLowerCase().includes(search);
-
       const matchesRole = !roleFilter || user?.role === roleFilter;
-
       return matchesSearch && matchesRole;
     });
   }, [users, query, roleFilter]);

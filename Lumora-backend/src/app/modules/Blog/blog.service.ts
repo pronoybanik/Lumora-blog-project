@@ -69,12 +69,15 @@ const getUniqueSlug = async (title: string, excludedId?: string) => {
 const getAuthor = async (user: AuthenticatedUser) =>
   prisma.user.findUniqueOrThrow({
     where: { email: user?.email },
-    select: { id: true },
+    select: { id: true, role: true, authorStatus: true },
   });
 
 const createBlog = async (payload: BlogPayload, user: AuthenticatedUser) => {
   console.log("user", user);
   const author = await getAuthor(user);
+  if (payload.isPremium === true && (author.role !== "AUTHOR" || author.authorStatus !== "APPROVED")) {
+    throw new ApiError(StatusCodes.FORBIDDEN, "Only verified authors can create premium blogs");
+  }
   const slug = await getUniqueSlug(payload.title);
 
   if (payload.categoryId) {
@@ -308,6 +311,13 @@ const updateBlog = async (
 
   if (blog.authorId !== author.id && user.role !== "ADMIN") {
     throw new ApiError(StatusCodes.FORBIDDEN, "You cannot update this blog");
+  }
+
+  if (payload.isPremium === true && user.role !== "ADMIN") {
+    const currentUser = await prisma.user.findUniqueOrThrow({ where: { id: author.id }, select: { role: true, authorStatus: true } });
+    if (currentUser.role !== "AUTHOR" || currentUser.authorStatus !== "APPROVED") {
+      throw new ApiError(StatusCodes.FORBIDDEN, "Only verified authors can publish premium blogs");
+    }
   }
 
   if (payload.status !== undefined && user.role !== "ADMIN") {

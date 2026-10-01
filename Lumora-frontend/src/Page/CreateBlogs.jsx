@@ -1,5 +1,6 @@
 import React from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useAuth } from "../context/useAuth";
 import {
   ArrowLeft,
   Eye,
@@ -22,6 +23,7 @@ const CLOUDINARY_UPLOAD_PRESET =
   import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "Lumora";
 
 export default function CreateBlogs() {
+  const { user } = useAuth();
   const { id } = useParams();
   const navigate = useNavigate();
   const isEditing = Boolean(id);
@@ -48,6 +50,8 @@ export default function CreateBlogs() {
   const [publishing, setPublishing] = React.useState(false);
 
   const [message, setMessage] = React.useState(null);
+
+  const isVerifiedAuthor = user?.role === "AUTHOR" && user?.authorStatus === "APPROVED";
 
   const fileInputRef = React.useRef(null);
 
@@ -91,14 +95,14 @@ export default function CreateBlogs() {
         setCoverImage(blog.coverImage || "");
         setImagePreview(blog.coverImage || "");
         setCategoryId(blog.categoryId || blog.category?.id || "");
-        setIsPremium(Boolean(blog.isPremium));
+        setIsPremium(isVerifiedAuthor && Boolean(blog.isPremium));
       } catch (error) {
         setMessage({ type: "error", text: error.message });
       }
     };
 
     loadBlog();
-  }, [isEditing, id]);
+  }, [isEditing, id, isVerifiedAuthor]);
 
   const handleTitleChange = (e) => {
     const value = e.target.value;
@@ -516,10 +520,12 @@ export default function CreateBlogs() {
               </p>
             </div>
 
-            <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-indigo-100 bg-indigo-50/60 p-3">
-              <input type="checkbox" checked={isPremium} onChange={(event) => setIsPremium(event.target.checked)} className="mt-0.5 accent-indigo-700" />
-              <span><span className="block text-sm font-semibold text-slate-800">Premium article</span><span className="mt-1 block text-[11px] leading-4 text-slate-500">Only active subscribers can read the full content.</span></span>
-            </label>
+            {isVerifiedAuthor && (
+              <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-indigo-100 bg-indigo-50/60 p-3">
+                <input type="checkbox" checked={isPremium} onChange={(event) => setIsPremium(event.target.checked)} className="mt-0.5 accent-indigo-700" />
+                <span><span className="block text-sm font-semibold text-slate-800">Premium article</span><span className="mt-1 block text-[11px] leading-4 text-slate-500">Only active subscribers can read the full content.</span></span>
+              </label>
+            )}
 
             <button
               type="button"

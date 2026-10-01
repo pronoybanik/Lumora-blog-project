@@ -1,4 +1,6 @@
 import { prisma } from "../../lib/prisma";
+import ApiError from "../../Errors/ApiError";
+import { StatusCodes } from "http-status-codes";
 
 type ProfileUpdatePayload = {
   bio?: string;
@@ -26,6 +28,9 @@ const getMyProfile = async (user: { id: string }) => {
       name: true,
       email: true,
       role: true,
+      authorStatus: true,
+      authorAppliedAt: true,
+      authorReviewedAt: true,
       createdAt: true,
       updatedAt: true,
       profile: true,
@@ -87,6 +92,9 @@ const getALlUser = async () => {
       name: true,
       email: true,
       role: true,
+      authorStatus: true,
+      authorAppliedAt: true,
+      authorReviewedAt: true,
       createdAt: true,
       updatedAt: true
     },
@@ -94,13 +102,92 @@ const getALlUser = async () => {
   return result;
 };
 
+const applyForAuthor = async (userId: string) => {
+  const user = await prisma.user.findUniqueOrThrow({
+    where: { id: userId },
+    select: { role: true, authorStatus: true },
+  });
+
+  if (user.role === "ADMIN" || user.authorStatus === "APPROVED") {
+    throw new ApiError(StatusCodes.BAD_REQUEST, "You are already a verified author");
+  }
+
+  if (user.authorStatus === "PENDING") {
+    throw new ApiError(StatusCodes.CONFLICT, "Your author application is already pending");
+  }
+
+  return prisma.user.update({
+    where: { id: userId },
+    data: { authorStatus: "PENDING", authorAppliedAt: new Date(), authorReviewedAt: null },
+    select: { id: true, role: true, authorStatus: true, authorAppliedAt: true },
+  });
+};
+
+const getAuthorApplications = async () =>
+  prisma.user.findMany({
+    where: { authorStatus: { in: ["PENDING", "APPROVED"] } },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      authorStatus: true,
+      authorAppliedAt: true,
+      authorReviewedAt: true,
+      profile: true,
+      _count: { select: { blogs: true } },
+    },
+    orderBy: { authorAppliedAt: "desc" },
+  });
+
+const reviewAuthorApplication = async (
+  userId: string,
+  decision: "APPROVED" | "REJECTED",
+) => {
+  const user = await prisma.user.findUniqueOrThrow({ where: { id: userId }, select: { role: true, authorStatus: true } });
+
+  if (user.role === "ADMIN") {
+    throw new ApiError(StatusCodes.BAD_REQUEST, "Admins cannot be author applicants");
+  }
+
+  return prisma.user.update({
+    where: { id: userId },
+    data: {
+      role: decision === "APPROVED" ? "AUTHOR" : "USER",
+      authorStatus: decision,
+      authorReviewedAt: new Date(),
+    },
+    select: { id: true, name: true, email: true, role: true, authorStatus: true, authorReviewedAt: true },
+  });
+};
+
 const getAuthors = async () =>
   prisma.user.findMany({
-    where: { blogs: { some: { status: "PUBLISHED" } } },
+    where: {
+      role: "AUTHOR",
+      authorStatus: "APPROVED",
+    },
     select: {
       id: true,
       name: true,
       role: true,
+      profile: true,
+      _count: { select: { blogs: true, followers: true } },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+const getVerifiedAuthors = async () =>
+  prisma.user.findMany({
+    where: {
+      role: "AUTHOR",
+      authorStatus: "APPROVED",
+    },
+    select: {
+      id: true,
+      name: true,
+      role: true,
+      authorStatus: true,
       profile: true,
       _count: { select: { blogs: true, followers: true } },
     },
@@ -148,7 +235,11 @@ export const userServices = {
   updateMyProfile,
   getALlUser,
   getAuthors,
+  getVerifiedAuthors,
   toggleFollow,
   getFollowStatus,
   deleteUser,
+  applyForAuthor,
+  getAuthorApplications,
+  reviewAuthorApplication,
 };

@@ -10,8 +10,6 @@ import {
 } from "lucide-react";
 import { Link, NavLink, Outlet } from "react-router-dom";
 
-
-
 const menuItems = [
   {
     icon: Home,
@@ -40,14 +38,14 @@ const menuItems = [
   },
   {
     icon: Bookmark,
-    label: "Bookmarks",
-    routes: "/adminDashboard/bookmarks",
+    label: "Authors",
+    routes: "/adminDashboard/authors",
   },
-  {
-    icon: History,
-    label: "Reading History",
-    routes: "/adminDashboard/history",
-  },
+  // {
+  //   icon: History,
+  //   label: "Reading History",
+  //   routes: "/adminDashboard/history",
+  // },
 ];
 
 export default function AdminNavbar({ children }) {

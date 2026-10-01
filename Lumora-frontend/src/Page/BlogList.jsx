@@ -16,14 +16,18 @@ const fallbackImages = [
   "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&h=600&fit=crop",
 ];
 const filters = ["All", "Design", "Tech", "Business"];
-const BLOG_LIST_CACHE_KEY = "lumora:blog-list:v2";
+const BLOG_LIST_CACHE_KEY = "lumora:blog-list:v4";
 const BLOG_LIST_CACHE_TTL = 60 * 1000;
 
 const readBlogListCache = () => {
   try {
     const cached = JSON.parse(sessionStorage.getItem(BLOG_LIST_CACHE_KEY));
 
-    if (!cached || !Array.isArray(cached.blogs) || !Array.isArray(cached.authors)) {
+    if (
+      !cached ||
+      !Array.isArray(cached.blogs) ||
+      !Array.isArray(cached.authors)
+    ) {
       return null;
     }
 
@@ -134,7 +138,7 @@ function AuthorCard({ author, onFollow }) {
   };
 
   return (
-    <div className="flex items-center justify-between gap-2 border-t border-indigo-100/80 py-3 first:border-t-0 first:pt-0 last:pb-0">
+    <div className="flex min-h-16 w-full items-center justify-between gap-2 border-t border-indigo-100/80 py-3 last:pb-0">
       <div className="flex min-w-0 items-center gap-2">
         {profile.avatar ? (
           <img
@@ -196,8 +200,10 @@ export default function BlogList() {
 
       try {
         const [blogsResponse, authorsResponse] = await Promise.all([
-          fetch(`${API_BASE_URL}/blog${searchQuery ? `?search=${encodeURIComponent(searchQuery)}` : ""}`),
-          fetch(`${API_BASE_URL}/user/authors`),
+          fetch(
+            `${API_BASE_URL}/blog${searchQuery ? `?search=${encodeURIComponent(searchQuery)}` : ""}`,
+          ),
+          fetch(`${API_BASE_URL}/user/verified-authors`),
         ]);
         const result = await blogsResponse.json();
         const authorsResult = await authorsResponse.json();
@@ -224,7 +230,7 @@ export default function BlogList() {
   );
   const featuredBlog = visibleBlogs[0];
   const sideBlogs = visibleBlogs.slice(1, 3);
-  const articleBlogs = visibleBlogs.slice(0, 3);
+  const articleBlogs = visibleBlogs;
 
   const updateAuthorFollowers = (authorId, followers) => {
     setAuthors((previous) =>
@@ -255,7 +261,10 @@ export default function BlogList() {
               </h1>
             </div>
             <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
-              <form onSubmit={submitSearch} className="flex items-center rounded-full border border-slate-200 bg-white px-3 py-2 shadow-sm sm:w-80">
+              <form
+                onSubmit={submitSearch}
+                className="flex items-center rounded-full border border-slate-200 bg-white px-3 py-2 shadow-sm sm:w-80"
+              >
                 <Search size={16} className="mr-2 shrink-0 text-slate-400" />
                 <input
                   value={searchInput}
@@ -264,7 +273,10 @@ export default function BlogList() {
                   aria-label="Search blogs"
                   className="min-w-0 flex-1 bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400"
                 />
-                <button type="submit" className="ml-2 rounded-full bg-indigo-700 px-3 py-1 text-xs font-semibold text-white hover:bg-indigo-800">
+                <button
+                  type="submit"
+                  className="ml-2 rounded-full bg-indigo-700 px-3 py-1 text-xs font-semibold text-white hover:bg-indigo-800"
+                >
                   Search
                 </button>
               </form>
@@ -295,7 +307,9 @@ export default function BlogList() {
           )}
           {!loading && !error && visibleBlogs.length === 0 && (
             <div className="rounded-2xl bg-white p-12 text-center text-slate-500">
-              {searchQuery ? `No blogs found for “${searchQuery}”.` : "No blogs found."}
+              {searchQuery
+                ? `No blogs found for “${searchQuery}”.`
+                : "No blogs found."}
             </div>
           )}
 
@@ -382,10 +396,10 @@ export default function BlogList() {
           <section className="border-t border-slate-200 py-12">
             <div className="mb-6">
               <p className="text-xs font-semibold tracking-wide text-indigo-700 mb-1">
-                MEET THE WRITERS
+                VERIFIED AUTHORS
               </p>
               <h2 className="text-3xl font-extrabold tracking-tight">
-                Featured Authors
+                Authors trusted by Lumora
               </h2>
             </div>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -419,118 +433,53 @@ export default function BlogList() {
           </div>
 
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_212px]">
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              {articleBlogs[0] && (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {articleBlogs.map((blog, index) => (
                 <Link
-                  to={`/blog/${articleBlogs[0].id}`}
-                  className="group overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-sm transition-shadow hover:shadow-md md:row-span-2"
+                  key={blog.id}
+                  to={`/blog/${blog.id}`}
+                  className="group overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-sm transition-shadow hover:shadow-md"
                 >
-                  <div className="aspect-[1.55] overflow-hidden bg-slate-200">
+                  <div className="aspect-[1.7] overflow-hidden bg-slate-200">
                     <img
-                      src={
-                        cleanImageUrl(articleBlogs[0].coverImage) ||
-                        fallbackImages[0]
-                      }
-                      alt={articleBlogs[0].title}
+                      src={cleanImageUrl(blog.coverImage) || fallbackImages[index % fallbackImages.length]}
+                      alt={blog.title}
                       className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
                   </div>
-                  <div className="p-3.5 sm:p-4">
-                    <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-blue-600">
-                      {articleBlogs[0].category?.name || "Productivity"}{" "}
+                  <div className="p-4">
+                    <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-indigo-600">
+                      {blog.category?.name || "Lumora story"}{" "}
                       <span className="px-1 text-slate-300">·</span>{" "}
                       <span className="normal-case font-normal text-slate-600">
-                        {getReadTime(articleBlogs[0].content)}
+                        {getReadTime(blog.content)}
                       </span>
                     </p>
-                    <h3 className="text-xl font-bold leading-tight text-slate-950">
-                      {articleBlogs[0].title}
+                    <h3 className="line-clamp-2 text-lg font-bold leading-tight text-slate-950">
+                      {blog.title}
                     </h3>
                     <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-slate-600">
-                      {getDescription(articleBlogs[0])}
+                      {getDescription(blog)}
                     </p>
                     <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3">
-                      <Author blog={articleBlogs[0]} />
+                      <Author blog={blog} />
                       <div className="flex items-center gap-3 text-[11px] text-slate-500">
-                        <span className="inline-flex items-center gap-1">
-                          <Heart size={12} />{" "}
-                          {articleBlogs[0]._count?.likes ?? 0}
-                        </span>
-                        <span className="inline-flex items-center gap-1">
-                          <MessageCircle size={12} />{" "}
-                          {articleBlogs[0]._count?.comments ?? 0}
-                        </span>
+                        <span className="inline-flex items-center gap-1"><Heart size={12} />{blog._count?.likes ?? 0}</span>
+                        <span className="inline-flex items-center gap-1"><MessageCircle size={12} />{blog._count?.comments ?? 0}</span>
                       </div>
                     </div>
                   </div>
                 </Link>
-              )}
-
-              {articleBlogs[1] && (
-                <Link
-                  to={`/blog/${articleBlogs[1].id}`}
-                  className="group flex min-h-[215px] flex-col justify-between rounded-xl border border-slate-200/80 bg-indigo-50/70 p-4 transition-colors hover:bg-indigo-50"
-                >
-                  <div>
-                    <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-rose-600">
-                      {articleBlogs[1].category?.name || "Essay"}{" "}
-                      <span className="px-1 text-indigo-200">·</span>{" "}
-                      <span className="normal-case font-normal text-slate-600">
-                        {getReadTime(articleBlogs[1].content)}
-                      </span>
-                    </p>
-                    <h3 className="text-xl font-bold leading-tight text-slate-950">
-                      {articleBlogs[1].title}
-                    </h3>
-                    <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-slate-700">
-                      {getDescription(articleBlogs[1])}
-                    </p>
-                  </div>
-                  <div className="mt-4 flex items-center justify-between">
-                    <Author blog={articleBlogs[1]} />
-                    <Bookmark size={15} className="text-slate-600" />
-                  </div>
-                </Link>
-              )}
-
-              {articleBlogs[2] && (
-                <Link
-                  to={`/blog/${articleBlogs[2].id}`}
-                  className="group overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-sm transition-shadow hover:shadow-md"
-                >
-                  <div className="aspect-[2.2] overflow-hidden bg-slate-200">
-                    <img
-                      src={
-                        cleanImageUrl(articleBlogs[2].coverImage) ||
-                        fallbackImages[2]
-                      }
-                      alt={articleBlogs[2].title}
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                  </div>
-                  <div className="p-3.5">
-                    <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-indigo-600">
-                      {articleBlogs[2].category?.name || "Web3"}{" "}
-                      <span className="px-1 text-slate-300">·</span>{" "}
-                      <span className="normal-case font-normal text-slate-600">
-                        {getReadTime(articleBlogs[2].content)}
-                      </span>
-                    </p>
-                    <h3 className="line-clamp-2 text-lg font-bold leading-tight text-slate-950">
-                      {articleBlogs[2].title}
-                    </h3>
-                  </div>
-                </Link>
-              )}
+              ))}
             </div>
 
             {authors.length > 0 && (
               <aside className="h-fit rounded-xl bg-indigo-100/80 p-3.5">
                 <h3 className="border-b border-indigo-200 pb-2.5 text-sm font-bold text-slate-950">
-                  Popular Authors
+                  Verified Authors
                 </h3>
                 <div className="mt-2.5">
-                  {authors.slice(0, 3).map((author) => (
+                  {authors.slice(0, 6).map((author) => (
                     <AuthorCard
                       key={author.id}
                       author={author}
@@ -541,12 +490,9 @@ export default function BlogList() {
               </aside>
             )}
           </div>
-          {!loading &&
-            !error &&
-            visibleBlogs.length > 1 &&
-            articleBlogs.length === 0 && (
+          {!loading && !error && visibleBlogs.length === 0 && (
               <p className="text-slate-500">No articles match this filter.</p>
-            )}
+          )}
         </section>
       </main>
     </div>

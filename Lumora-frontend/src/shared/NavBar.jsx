@@ -46,6 +46,11 @@ const NavBar = () => {
           <Link to="/pricing" className="hover:text-slate-900">
             Pricing
           </Link>
+          {user && user.role !== "AUTHOR" && user.role !== "ADMIN" && (
+            <Link to="/become-author" className="hover:text-slate-900">
+              Become an author
+            </Link>
+          )}
 
           {user?.role === "ADMIN" && (
             <Link

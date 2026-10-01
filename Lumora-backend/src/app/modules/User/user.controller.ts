@@ -52,6 +52,17 @@ const getAuthors = catchAsync(async (_req: Request, res: Response) => {
   });
 });
 
+const getVerifiedAuthors = catchAsync(async (_req: Request, res: Response) => {
+  const result = await userServices.getVerifiedAuthors();
+
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: "Verified authors fetched successfully!",
+    data: result,
+  });
+});
+
 const toggleFollow = catchAsync(async (req: Request, res: Response) => {
   const result = await userServices.toggleFollow(
     String(req.params.id),
@@ -90,12 +101,35 @@ const deleteUser = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const applyForAuthor = catchAsync(async (req: Request, res: Response) => {
+  const result = await userServices.applyForAuthor(req.user!.id);
+  sendResponse(res, { statusCode: StatusCodes.OK, success: true, message: "Author application submitted", data: result });
+});
+
+const getAuthorApplications = catchAsync(async (_req: Request, res: Response) => {
+  const result = await userServices.getAuthorApplications();
+  sendResponse(res, { statusCode: StatusCodes.OK, success: true, message: "Author applications fetched", data: result });
+});
+
+const reviewAuthorApplication = catchAsync(async (req: Request, res: Response) => {
+  const decision = String(req.body.decision || "").toUpperCase();
+  if (decision !== "APPROVED" && decision !== "REJECTED") {
+    return res.status(StatusCodes.BAD_REQUEST).json({ success: false, message: "Decision must be APPROVED or REJECTED" });
+  }
+  const result = await userServices.reviewAuthorApplication(String(req.params.id), decision);
+  sendResponse(res, { statusCode: StatusCodes.OK, success: true, message: `Author application ${decision.toLowerCase()}`, data: result });
+});
+
 export const userController = {
   getMyProfile,
   updateMyProfile,
   getALlUser,
   getAuthors,
+  getVerifiedAuthors,
   toggleFollow,
   getFollowStatus,
   deleteUser,
+  applyForAuthor,
+  getAuthorApplications,
+  reviewAuthorApplication,
 };

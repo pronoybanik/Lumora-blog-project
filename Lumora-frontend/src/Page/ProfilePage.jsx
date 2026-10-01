@@ -533,6 +533,7 @@ export default function ProfilePage() {
   const [savingProfile, setSavingProfile] = useState(false);
 
   const [viewMode, setViewMode] = useState("list");
+  const [applyingForAuthor, setApplyingForAuthor] = useState(false);
 
   /* =======================================================
      Fetch Current User
@@ -673,6 +674,24 @@ export default function ProfilePage() {
       alert(err.message || "Failed to update profile.");
     } finally {
       setSavingProfile(false);
+    }
+  };
+
+  const handleAuthorApplication = async () => {
+    try {
+      setApplyingForAuthor(true);
+      const response = await fetch(`${API_BASE_URL}/user/author/apply`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        credentials: "include",
+      });
+      const result = await response.json();
+      if (!response.ok || !result.success) throw new Error(result.message || "Application failed");
+      await fetchMyProfile();
+    } catch (err) {
+      alert(err.message || "Unable to submit author application.");
+    } finally {
+      setApplyingForAuthor(false);
     }
   };
 
@@ -847,12 +866,7 @@ export default function ProfilePage() {
                 className="w-32 h-32 rounded-full ring-4 ring-white object-cover bg-slate-100"
               />
 
-              <span className="absolute bottom-2 right-2 bg-blue-600 rounded-full p-1 ring-2 ring-white">
-                <BadgeCheck
-                  className="w-3.5 h-3.5 text-white"
-                  strokeWidth={2.5}
-                />
-              </span>
+              {user?.authorStatus === "APPROVED" && <span className="absolute bottom-2 right-2 bg-blue-600 rounded-full p-1 ring-2 ring-white"><BadgeCheck className="w-3.5 h-3.5 text-white" strokeWidth={2.5} /></span>}
             </div>
 
             {/* User Info */}
@@ -1064,6 +1078,17 @@ export default function ProfilePage() {
                   <p className="mt-1 text-sm text-slate-500">Premium articles are locked.</p>
                   <Link to="/pricing" className="mt-4 inline-flex text-sm font-semibold text-indigo-700 hover:text-indigo-900">Upgrade to Premium →</Link>
                 </>
+              )}
+            </div>
+
+            <div className={`rounded-xl border p-5 ${user?.authorStatus === "APPROVED" ? "border-emerald-200 bg-emerald-50" : "border-slate-100 bg-white"}`}>
+              <h3 className="text-xs font-semibold tracking-wide text-slate-500 mb-3">AUTHOR STATUS</h3>
+              {user?.authorStatus === "APPROVED" ? (
+                <><p className="text-lg font-semibold text-emerald-800">Verified author</p><p className="mt-1 text-sm text-slate-600">You can publish premium blogs.</p></>
+              ) : user?.authorStatus === "PENDING" ? (
+                <><p className="text-lg font-semibold text-amber-700">Application pending</p><p className="mt-1 text-sm text-slate-500">An admin is reviewing your application.</p></>
+              ) : (
+                <><p className="text-lg font-semibold text-slate-800">Become an author</p><p className="mt-1 text-sm text-slate-500">Apply to publish premium blogs for Lumora readers.</p><Link to="/become-author" className="mt-4 inline-flex rounded-lg bg-indigo-700 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-800">Apply to become an author</Link></>
               )}
             </div>
 

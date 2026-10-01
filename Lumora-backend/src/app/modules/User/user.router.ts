@@ -18,10 +18,19 @@ router.get(
 );
 
 router.get(
+    '/verified-authors',
+    userController.getVerifiedAuthors
+);
+
+router.get(
     '/allUser',
     auth("ADMIN"),
     userController.getALlUser
 );
+
+router.post('/author/apply', auth(), userController.applyForAuthor);
+router.get('/author/applications', auth("ADMIN"), userController.getAuthorApplications);
+router.patch('/author/:id/review', auth("ADMIN"), userController.reviewAuthorApplication);
 
 router.delete(
     '/:id',

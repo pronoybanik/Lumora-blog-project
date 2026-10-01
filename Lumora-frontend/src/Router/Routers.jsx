@@ -16,6 +16,8 @@ import CategoriesPage from "../Page/admin/CategoriesPage.jsx";
 import PaymentResult from "../Page/PaymentResult.jsx";
 import PaymentFailed from "../Page/PaymentFailed.jsx";
 import PaymentCancelled from "../Page/PaymentCancelled.jsx";
+import AuthorApplication from "../Page/AuthorApplication.jsx";
+import AuthorsList from "../Page/admin/AuthorsList.jsx";
 
 const Routers = createBrowserRouter([
   {
@@ -49,6 +51,10 @@ const Routers = createBrowserRouter([
       {
         path: "/profilePage",
         element: <ProfilePage />,
+      },
+      {
+        path: "/become-author",
+        element: <AuthorApplication />,
       },
     ],
   },
@@ -84,6 +90,10 @@ const Routers = createBrowserRouter([
       {
         path: "/adminDashboard/categories",
         element: <CategoriesPage />,
+      },
+      {
+        path: "/adminDashboard/authors",
+        element: <AuthorsList />,
       },
     ],
   },

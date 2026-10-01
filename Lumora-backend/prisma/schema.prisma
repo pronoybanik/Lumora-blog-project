@@ -18,6 +18,13 @@ enum Role {
   ADMIN
 }
 
+enum AuthorStatus {
+  NONE
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 enum BlogStatus {
   DRAFT
   PUBLISHED
@@ -48,6 +55,9 @@ model User {
   name     String
   password String
   role     Role   @default(USER)
+  authorStatus AuthorStatus @default(NONE)
+  authorAppliedAt DateTime?
+  authorReviewedAt DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -63,6 +73,7 @@ model User {
 
   @@index([email])
   @@index([role])
+  @@index([authorStatus])
 }
 
 // ==========================

@@ -14,8 +14,8 @@ app.use(
     origin:
       process.env.FRONTEND_URL ||
       "http://localhost:5173" ||
-      "https://lumora-blog-project-frontend.vercel.app" ||
-      " http://localhost:5174/",
+      "https://lumora-blog-project.vercel.app" ||
+      "http://localhost:5174",
     credentials: true,
   }),
 );
