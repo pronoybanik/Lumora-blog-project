@@ -49,6 +49,8 @@ export default function CreateBlogs() {
 
   const [publishing, setPublishing] = React.useState(false);
 
+  const [loadingBlog, setLoadingBlog] = React.useState(isEditing);
+
   const [message, setMessage] = React.useState(null);
 
   const isVerifiedAuthor = user?.role === "AUTHOR" && user?.authorStatus === "APPROVED";
@@ -73,11 +75,14 @@ export default function CreateBlogs() {
 
   React.useEffect(() => {
     if (!isEditing) {
+      setLoadingBlog(false);
       setTitle("The architecture of silence.");
       return;
     }
 
     const loadBlog = async () => {
+      setLoadingBlog(true);
+
       try {
         const response = await fetch(
           `${API_BASE_URL}/blog/${encodeURIComponent(id)}`,
@@ -98,6 +103,8 @@ export default function CreateBlogs() {
         setIsPremium(isVerifiedAuthor && Boolean(blog.isPremium));
       } catch (error) {
         setMessage({ type: "error", text: error.message });
+      } finally {
+        setLoadingBlog(false);
       }
     };
 
@@ -354,7 +361,7 @@ export default function CreateBlogs() {
             <button
               type="button"
               onClick={handlePublish}
-              disabled={publishing || uploadingImage}
+              disabled={publishing || uploadingImage || loadingBlog}
               className="flex items-center gap-1 bg-indigo-700 hover:bg-indigo-800 disabled:bg-indigo-400 disabled:cursor-not-allowed text-white text-sm font-medium pl-4 pr-3 py-2 rounded-full transition-colors"
             >
               {publishing ? (
@@ -393,6 +400,14 @@ export default function CreateBlogs() {
         </div>
       )}
 
+      {loadingBlog ? (
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 py-24 flex items-center justify-center">
+          <div className="flex items-center gap-3 text-sm text-slate-500">
+            <Loader2 className="h-5 w-5 animate-spin text-indigo-600" />
+            Loading blog data...
+          </div>
+        </main>
+      ) : (
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-10 grid grid-cols-1 lg:grid-cols-4 gap-8 lg:gap-10">
         <section className="lg:col-span-3">
           <textarea
@@ -543,6 +558,7 @@ export default function CreateBlogs() {
           </div>
         </aside>
       </main>
+      )}
     </div>
   );
 }

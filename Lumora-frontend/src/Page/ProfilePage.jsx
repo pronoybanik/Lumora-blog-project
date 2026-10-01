@@ -169,7 +169,7 @@ function PublicationCard({ blog, viewMode }) {
 
       <div className="px-4 pb-4">
         <Link
-          to={`/editBlog/${encodeURIComponent(blog.slug)}`}
+          to={`/editBlog/${encodeURIComponent(blog.id)}`}
           className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-700 hover:text-indigo-900"
         >
           <Edit3 className="h-3.5 w-3.5" /> Edit blog
